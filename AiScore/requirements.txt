@@ -1,8 +1,0 @@
-fastapi
-numpy
-pandas
-pydantic
-pydantic_core
-pymongo
-uvicorn
-bson
