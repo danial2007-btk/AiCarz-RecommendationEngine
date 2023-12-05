@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+import uvicorn
 
 from main import AiScoreMain
 
@@ -21,3 +22,6 @@ async def calculate_ai_score(car_data: CarIdInput):
         # Handle exceptions, log them, and return an appropriate response
         raise HTTPException(status_code=500, detail="Internal Server Error")
     
+# if __name__ == "__main__":
+#     # Use the uvicorn.run method to start the FastAPI application
+#     uvicorn.run(app, port=9090)

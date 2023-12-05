@@ -1,6 +1,7 @@
 from bson import ObjectId
 import pymongo
 import logging
+
 # Correct import for AIScoreInput in app.py
 from AiScore import AIScoreInput
 
