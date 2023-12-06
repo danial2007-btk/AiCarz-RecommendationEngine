@@ -1,0 +1,130 @@
+{
+	"info": {
+		"_postman_id": "643b7117-6aff-4ec7-88da-9f6fdb63008d",
+		"name": "aicarz  - AI ENGINE APIs",
+		"description": "AICARZ - API collection for the AI ENGINE",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "30593006"
+	},
+	"item": [
+		{
+			"name": "AI Score",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"carid\":\"657038baea3ba0f3f555a3bf\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://aicarzai.eu-west-2.elasticbeanstalk.com/calculate_ai_score",
+					"protocol": "http",
+					"host": [
+						"aicarzai",
+						"eu-west-2",
+						"elasticbeanstalk",
+						"com"
+					],
+					"path": [
+						"calculate_ai_score"
+					]
+				},
+				"description": "## AI SCORE API\n\nThe Car AI Scoring API provides a method to obtain an AI score for a given car based on its unique identifier (car id). This API accepts a POST request with the car id in JSON format and returns the corresponding car id along with the calculated AI score in JSON format.\n\n###   \nEndpoint\n\n### `POST /calculate_ai_score`\n\n### **Request**\n\n- **URL**: `/calculate_ai_score`\n- **Method**: `POST`\n- **Content-Type**: `application/json`\n    \n\n#### Request Body\n\nThe request body must be a JSON object with the following parameter:\n\n- **car_id** (string, required): The unique identifier for the car."
+			},
+			"response": [
+				{
+					"name": "results-AiScore API",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"carid\":\"657038baea3ba0f3f555a3bf\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://aicarzai.eu-west-2.elasticbeanstalk.com/calculate_ai_score",
+							"protocol": "http",
+							"host": [
+								"aicarzai",
+								"eu-west-2",
+								"elasticbeanstalk",
+								"com"
+							],
+							"path": [
+								"calculate_ai_score"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "nginx"
+						},
+						{
+							"key": "Date",
+							"value": "Wed, 06 Dec 2023 11:29:01 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Content-Length",
+							"value": "52"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"car_id\": \"657038baea3ba0f3f555a3bf\",\n    \"ai_score\": 2.6\n}"
+				}
+			]
+		},
+		{
+			"name": "Feed Manager",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"userid\":\"657038baea3ba0f3f555a3bf\",\r\n    \"latitude\" : \"int\",\r\n    \"longitude\" : \"int\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://aicarzai.eu-west-2.elasticbeanstalk.com/feedmanager",
+					"protocol": "http",
+					"host": [
+						"aicarzai",
+						"eu-west-2",
+						"elasticbeanstalk",
+						"com"
+					],
+					"path": [
+						"feedmanager"
+					]
+				},
+				"description": "# Feed Manager API\n\nThe Feed Manager API provides a method to retrieve a list of feedCarIDs for a given user based on their userID and geographical coordinates. This API accepts a POST request with the user information in JSON format and returns a JSON object containing the userID and an array of feedCarIDs.  \n\n### Endpoint\n\n### `POST /feedmanager`\n\n#### Request\n\n- **URL**: `/feedmanager`\n    \n- **Method**: `POST`\n    \n- **Content-Type**: `application/json`\n    \n\n#### Request Body\n\nThe request body must be a JSON object with the following parameters:\n\n- **userid** (string, required): The unique identifier for the user.\n    \n- **latitude** (integer, required): The latitude coordinate of the user's location.\n    \n- **longitude** (integer, required): The longitude coordinate of the user's location."
+			},
+			"response": []
+		}
+	]
+}

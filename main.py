@@ -23,26 +23,3 @@ def AiScoreMain(car_id):
     ai_score_rounded = round(ai_score, 4)
 
     return ai_score_rounded
-
-
-# app = FastAPI()
-
-# class CarIdInput(BaseModel):
-#     carid: str
-
-# @app.post("/calculate_ai_score")
-# async def calculate_ai_score(car_data: CarIdInput):
-#     try:
-
-#         # Assuming you have a function named AiScoreMain that takes a car_id as input
-#         ai_score = AiScoreMain(car_data.carid)
-#         return {"car_id": car_data.carid, "ai_score": ai_score}
-
-#     except Exception as e:
-
-#         # Handle exceptions, log them, and return an appropriate response
-#         raise HTTPException(status_code=500, detail="Internal Server Error")
-    
-# if __name__ == "__app__":
-#     # Use the uvicorn.run method to start the FastAPI application
-#     uvicorn.run(app, host="0.0.0.0", port=100)
