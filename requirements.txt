@@ -6,3 +6,5 @@ pydantic_core
 pymongo
 uvicorn
 bson
+scikit-learn
+scikit-surprise

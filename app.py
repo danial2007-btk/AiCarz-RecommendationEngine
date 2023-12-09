@@ -51,13 +51,13 @@ async def feed_manager(
         coordinates.append(feed_data.longitude)
         coordinates.append(feed_data.latitude)
         
-        print("User ID: ", feed_data.user_id)
-        print("User Coordinates: ", coordinates)
+        # print("User ID: ", feed_data.user_id)
+        # print("User Coordinates: ", coordinates)
                         
         # Function named AiScoreMain that takes a car_id as input
         carIds_ouput = FeedManagerMain(feed_data.user_id, coordinates)
         
-        print("output",carIds_ouput)
+        # print("output",carIds_ouput)
         
         return {"UserId": feed_data.user_id, "CarIDs": carIds_ouput}
 
