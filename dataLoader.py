@@ -169,6 +169,9 @@ def load_likes_interaction(userId):
 
     return user_car_data
 
+# aa = load_likes_interaction("6572fb515ec48c65ee11d8b5")
+# print(aa)
+
 def load_dislikes_interaction(userId):
     # Load user dislikes interaction data for further processing
     user_dislikes_data = load_user_dislikes(userId)
@@ -184,3 +187,64 @@ def load_dislikes_interaction(userId):
         })
 
     return user_car_data
+
+def mainReturn(carIds):
+    carid = carIds
+    result = collection.find({"_id": ObjectId(carid)})
+
+    data = list(result)
+    car_profiles = []
+
+    for item in data:
+        car_id = str(item.get('_id', ''))
+        make = item.get('make', None)
+        fuelType = item.get('fuelType', None)
+        gearbox = item.get('gearbox', None)
+        engineSizeInLiter = item.get('engineSizeInLiter', None)
+        price = item.get('price', None)
+        carBuyLink = item.get('carBuyLink', None)
+        carImages = item.get('carImages', [])
+        model = item.get('model', None)
+        variant = item.get('variant', None)
+        mileageInMiles = item.get('mileageInMiles', None)
+        year = item.get('year', None)
+        ageIdentifier = item.get('ageIdentifier', None)
+        bodyType = item.get('bodyType', None)
+        currency = item.get('currency', None)
+        description = item.get('description', None)
+        cityName = item.get('cityName', None)
+         # Check for the existence of the 'location' field
+        location_data = item.get('location')
+        coordinates = location_data.get('coordinates', []) if location_data else []
+
+
+        # Replace None values with null
+        car_profile = {
+            "id": car_id,
+            "make": make,
+            "gearbox": gearbox,
+            "price": price,
+            "fueltype": fuelType,
+            "engineSizeInLiter": engineSizeInLiter,
+            "carBuyLink": carBuyLink,
+            "carImages": carImages,
+            "model": model,
+            "variant": variant,
+            "mileageInMiles": mileageInMiles,
+            "year": year,
+            "ageIdentifier": ageIdentifier,
+            "bodyType": bodyType,
+            "currency": currency,
+            "description": description,
+            "cityName": cityName,
+            "location": {
+                "type": "Point",
+                "coordinates": coordinates
+            }
+        }
+
+        car_profiles.append(car_profile)
+    
+    # print("Inside DataLoader mainReturn: ", car_profiles)
+        
+    return car_profiles

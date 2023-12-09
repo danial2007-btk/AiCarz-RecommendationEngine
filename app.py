@@ -56,10 +56,9 @@ async def feed_manager(
                         
         # Function named AiScoreMain that takes a car_id as input
         carIds_ouput = FeedManagerMain(feed_data.user_id, coordinates)
+        print("output in APP:::",carIds_ouput)
         
-        # print("output",carIds_ouput)
-        
-        return {"UserId": feed_data.user_id, "CarIDs": carIds_ouput}
+        return carIds_ouput
 
     except Exception as e:
         # Handle exceptions, log them, and return an appropriate response

@@ -8,6 +8,9 @@ import pandas as pd
 
 def load_user_car_data(user_car_data_interaction):
     df_user_car_data = pd.DataFrame(user_car_data_interaction)
+    
+    print("Columns in df_user_car_data:", df_user_car_data.columns)
+
     reader = Reader(rating_scale=(0, 1))
     data = Dataset.load_from_df(df_user_car_data[['user_id', 'id', 'interaction']], reader)
     return data.build_full_trainset()
