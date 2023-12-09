@@ -1,36 +1,7 @@
-# from fastapi import FastAPI, HTTPException
-# from pydantic import BaseModel
-# import uvicorn
-
-# from main import AiScoreMain
-
-# app = FastAPI()
-
-# class CarIdInput(BaseModel):
-#     carid: str
-
-# @app.post("/calculate_ai_score")
-# async def calculate_ai_score(car_data: CarIdInput):
-#     try:
-
-#         # Assuming you have a function named AiScoreMain that takes a car_id as input
-#         ai_score = AiScoreMain(car_data.carid)
-#         return {"car_id": car_data.carid, "ai_score": ai_score}
-
-#     except Exception as e:
-
-#         # Handle exceptions, log them, and return an appropriate response
-#         raise HTTPException(status_code=500, detail="Internal Server Error")
-    
-# if __name__ == "__main__":
-#     # Use the uvicorn.run method to start the FastAPI application
-#     uvicorn.run(app, port=9090)
-
-
 from fastapi import FastAPI, HTTPException, Depends, Query
 from pydantic import BaseModel
 
-from main import AiScoreMain
+from main import AiScoreMain,FeedManagerMain
 
 app = FastAPI()
 
@@ -60,3 +31,37 @@ async def calculate_ai_score(
     except Exception as e:
         # Handle exceptions, log them, and return an appropriate response
         raise HTTPException(status_code=500, detail="Internal Server Error") from e
+    
+    
+
+# FeedManager API Endpoint
+class FeedManagerInput(BaseModel):
+    user_id: str # User ID as input
+    longitude: float # User latitude as input
+    latitude: float # User longitude as input
+    
+@app.post("/feedmanager")
+async def feed_manager(
+    feed_data: FeedManagerInput,
+    api_key: str = Depends(check_api_key, use_cache=True),
+):
+    try:
+        
+        coordinates = []
+        coordinates.append(feed_data.longitude)
+        coordinates.append(feed_data.latitude)
+        
+        print("User ID: ", feed_data.user_id)
+        print("User Coordinates: ", coordinates)
+                        
+        # Function named AiScoreMain that takes a car_id as input
+        carIds_ouput = FeedManagerMain(feed_data.user_id, coordinates)
+        
+        print("output",carIds_ouput)
+        
+        return {"UserId": feed_data.user_id, "CarIDs": carIds_ouput}
+
+    except Exception as e:
+        # Handle exceptions, log them, and return an appropriate response
+        raise HTTPException(status_code=500, detail="Internal Server Error") from e
+    

@@ -1,6 +1,4 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-import uvicorn
+import time
 
 from dataLoader import dataGather, collection
 from AiScore import AIScoreInput, AIScoreCalculator
@@ -23,3 +21,93 @@ def AiScoreMain(car_id):
     ai_score_rounded = round(ai_score, 4)
 
     return ai_score_rounded
+
+
+
+
+# The below work is a structure of Main function where the feed manager will be called and the recommendations will be generated
+from dataLoader import load_car_profiles_from_mongodb, load_user_likes, load_likes_interaction, load_user_dislikes, load_dislikes_interaction  
+from modelLike import get_top_recommendations, calculate_cosine_similarity, preprocess_car_profiles, preprocess_user_car_profiles, train_collaborative_filtering_model, load_user_car_data
+from feedManager import suggest_cars_for_user, connect_to_mongodb
+from modelDislike import get_top_recommendations1, calculate_cosine_similarity1, preprocess_car_profiles1, preprocess_user_car_profiles1, train_collaborative_filtering_model1, load_user_car_data1
+
+# Record start time
+start_time = time.time()
+
+def FeedManagerMain(user_id, coordinates):
+    # User ID
+    user_id = user_id
+    print("Inside Main User ID: ", user_id)
+    # User coordinates
+    coordinates = coordinates
+    print("Inside Main User Coordinates: ", coordinates)
+    
+    recommended_car_pairs = suggest_cars_for_user(user_id, coordinates)
+    # print(recommended_car_pairs)
+
+   # Example usage likes recommadation
+    user_car_data_interaction = load_likes_interaction(user_id)
+    user_car_profiles = load_user_likes(user_id)
+    car_profiles = load_car_profiles_from_mongodb(coordinates)
+
+    numerical_features = ['price', 'engineSizeInLiter']
+    categorical_features = ['make', 'gearbox', 'fueltype']
+
+    trainset = load_user_car_data(user_car_data_interaction)
+    # collaborative_filtering_model = train_collaborative_filtering_model(trainset)
+    user_car_profiles = preprocess_user_car_profiles(user_car_profiles, numerical_features, categorical_features)
+    car_profiles = preprocess_car_profiles(car_profiles, numerical_features, categorical_features)
+
+    user_numerical_features = user_car_profiles[numerical_features].values
+    car_numerical_features = car_profiles[numerical_features].values
+
+    cosine_sim = calculate_cosine_similarity(user_numerical_features, car_numerical_features)
+    recommendations = get_top_recommendations(cosine_sim, car_profiles)
+
+    recommendation_likes_car_ids = recommendations['Car_ID'].tolist()
+
+    unique_recommendation_likes_car_ids = [car_id for car_id in recommendation_likes_car_ids if car_id not in recommended_car_pairs]
+
+    unique_recommendation_likes_car_ids = unique_recommendation_likes_car_ids[:7]
+
+    user_car_data_interaction = load_dislikes_interaction(user_id)
+    user_car_profiles = load_user_dislikes(user_id)
+    car_profiles = load_car_profiles_from_mongodb(coordinates)
+
+    numerical_features = ['price', 'engineSizeInLiter']
+    categorical_features = ['make', 'gearbox', 'fueltype']
+
+    trainset = load_user_car_data1(user_car_data_interaction)
+    # collaborative_filtering_model = train_collaborative_filtering_model(trainset)
+    user_car_profiles = preprocess_user_car_profiles1(user_car_profiles, numerical_features, categorical_features)
+    car_profiles = preprocess_car_profiles1(car_profiles, numerical_features, categorical_features)
+
+    user_numerical_features = user_car_profiles[numerical_features].values
+    car_numerical_features = car_profiles[numerical_features].values
+
+    cosine_sim = calculate_cosine_similarity1(user_numerical_features, car_numerical_features)
+    recommendations = get_top_recommendations1(cosine_sim, car_profiles)
+
+    recommendation_dislikes_car_ids = recommendations['Car_ID'].tolist()
+
+    unique_recommendation_dislikes_car_ids = [car_id for car_id in recommendation_dislikes_car_ids if car_id not in recommended_car_pairs]
+
+    unique_recommendation_dislikes_car_ids = unique_recommendation_dislikes_car_ids[:7]
+
+    final_recommation = recommended_car_pairs + unique_recommendation_likes_car_ids + unique_recommendation_dislikes_car_ids
+    final_recommation_25_carID = list(set(final_recommation))
+
+   
+    print(final_recommation_25_carID)
+    print(len(final_recommation_25_carID))
+    # print unique final_recommation
+    
+    # Record end time
+    end_time = time.time()
+
+    # Calculate elapsed time
+    elapsed_time = end_time - start_time
+
+    print(f"Elapsed Time: {elapsed_time} seconds")
+
+    return final_recommation_25_carID

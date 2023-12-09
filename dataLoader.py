@@ -54,3 +54,133 @@ def dataGather(collection, car_id):
         print("Car not found.")
         # Return default values
         return AIScoreInput(0, 0, 0, 0, 0, 0)
+    
+   
+# the data loader function for the recommadation model and the feed manager
+
+# Connect to MongoDB
+connection_string = "mongodb+srv://web_scrapping_read_only:rVXnGzz3jZvnRZx1@cluster0.uarux4m.mongodb.net/?retryWrites=true&w=majority"
+database_name = "aicarsdb"
+cardb = "cars"
+client = pymongo.MongoClient(connection_string)
+db = client[database_name]
+collection = db[cardb]
+
+def load_car_profiles_from_mongodb(coordinates):
+    # Load car profiles from MongoDB based on the specified city and user ID
+    result = collection.find({
+        'location': {
+            '$near': {
+                '$geometry': {
+                    'type': 'Point',
+                    'coordinates': coordinates
+                },
+                '$maxDistance': 160934
+            }
+        }
+    }, {
+        'make': 1,
+        'fuelType': 1,
+        'gearbox': 1,
+        'engineSizeInLiter': 1,
+        'price': 1,
+        '_id': 1
+    })
+
+    data = list(result)
+    car_profiles = []
+
+    # Extract relevant information from MongoDB query results
+    for item in data:
+        car_id = str(item.get('_id', ''))
+        make = item.get('make', '')
+        fuelType = item.get('fuelType', '')
+        gearbox = item.get('gearbox', '')
+        engineSizeInLiter = item.get('engineSizeInLiter', 0.0)
+        price = item.get('price', 0.0)
+
+        car_profile = {
+            "id": car_id,
+            "make": make,
+            "gearbox": gearbox,
+            "price": price,
+            "fueltype": fuelType,
+            "engineSizeInLiter": engineSizeInLiter
+        }
+
+        car_profiles.append(car_profile)
+
+    return car_profiles
+
+
+def load_user_likes(userId):
+    # Load user likes from MongoDB based on user ID
+    user_data = collection.find({"likes": ObjectId(userId)})
+    user_likes = {"user_id": userId, "likes": []}
+
+    # Extract liked car information
+    for doc in user_data:
+        if doc:
+            car_data = {
+                "id": str(doc["_id"]),
+                "make": doc["make"],
+                "gearbox": doc["gearbox"],
+                "fueltype": doc["fuelType"],
+                "price": doc["price"],
+                "engineSizeInLiter": doc["engineSizeInLiter"]
+            }
+            user_likes["likes"].append(car_data)
+
+    return user_likes
+
+def load_user_dislikes(userId):
+    # Load user dislikes from MongoDB based on user ID
+    user_data = collection.find({"dislikes": ObjectId(userId)})
+    user_dislikes = {"user_id": userId, "dislikes": []}
+
+    # Extract disliked car information
+    for doc in user_data:
+        if doc:
+            car_data = {
+                "id": str(doc["_id"]),
+                "make": doc["make"],
+                "gearbox": doc["gearbox"],
+                "fueltype": doc["fuelType"],
+                "price": doc["price"],
+                "engineSizeInLiter": doc["engineSizeInLiter"]
+            }
+            user_dislikes["dislikes"].append(car_data)
+
+    return user_dislikes
+
+def load_likes_interaction(userId):
+    # Load user likes interaction data for further processing
+    user_likes_data = load_user_likes(userId)
+    user_car_data = []
+
+    like_id = user_likes_data["likes"]
+    for car in like_id:
+        L_id = car['id']
+        user_car_data.append({
+            "user_id": userId,
+            "id": L_id,
+            "interaction": 1
+        })
+
+    return user_car_data
+
+def load_dislikes_interaction(userId):
+    # Load user dislikes interaction data for further processing
+    user_dislikes_data = load_user_dislikes(userId)
+    user_car_data = []
+
+    dislike_id = user_dislikes_data['dislikes']
+    for car in dislike_id:
+        D_id = car['id']
+        user_car_data.append({
+            "user_id": userId,
+            "id": D_id,
+            "interaction": 0
+        })
+
+    return user_car_data
