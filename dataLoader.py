@@ -1,6 +1,7 @@
 from bson import ObjectId
 import pymongo
 import logging
+import random
 
 # Correct import for AIScoreInput in app.py
 from AiScore import AIScoreInput
@@ -14,10 +15,30 @@ connection_string = "mongodb+srv://web_scrapping_read_only:rVXnGzz3jZvnRZx1@clus
 database_name = "aicarsdb"
 car_db = "cars"
 
+def connect_to_mongodb():
+    # Function to establish a connection to MongoDB
+    client = pymongo.MongoClient(connection_string)
+    db = client[database_name]
+    collection = db[car_db]
+
+    return collection
+
 # Establish MongoDB connection
-client = pymongo.MongoClient(connection_string)
-db = client[database_name]
-collection = db[car_db]
+collection = connect_to_mongodb()
+
+# # Connect to MongoDB
+# # connection_string = "mongodb+srv://web_scrapping_read_only:rVXnGzz3jZvnRZx1@cluster0.uarux4m.mongodb.net/?retryWrites=true&w=majority"
+# # database_name = "aicarsdb"
+# # cardb = "cars"
+# client = pymongo.MongoClient(connection_string)
+# db = client[database_name]
+# collection = db[car_db]
+
+
+# # Establish MongoDB connection
+# client = pymongo.MongoClient(connection_string)
+# db = client[database_name]
+# collection = db[car_db]
 
 def dataGather(collection, car_id):
     # try:
@@ -58,14 +79,6 @@ def dataGather(collection, car_id):
    
 # the data loader function for the recommadation model and the feed manager
 
-# Connect to MongoDB
-connection_string = "mongodb+srv://web_scrapping_read_only:rVXnGzz3jZvnRZx1@cluster0.uarux4m.mongodb.net/?retryWrites=true&w=majority"
-database_name = "aicarsdb"
-cardb = "cars"
-client = pymongo.MongoClient(connection_string)
-db = client[database_name]
-collection = db[cardb]
-
 def load_car_profiles_from_mongodb(coordinates):
     # Load car profiles from MongoDB based on the specified city and user ID
     result = collection.find({
@@ -75,9 +88,10 @@ def load_car_profiles_from_mongodb(coordinates):
                     'type': 'Point',
                     'coordinates': coordinates
                 },
-                '$maxDistance': 160934
+                '$maxDistance': 321869
             }
-        }
+        },
+        'isActive': True  # Add this filter to check for isActive field
     }, {
         'make': 1,
         'fuelType': 1,
@@ -131,6 +145,10 @@ def load_user_likes(userId):
             }
             user_likes["likes"].append(car_data)
 
+            # If user likes is empty, return random cars
+    if not user_likes["likes"]:
+        user_likes["likes"] = get_random_cars_if_empty()
+
     return user_likes
 
 def load_user_dislikes(userId):
@@ -151,7 +169,27 @@ def load_user_dislikes(userId):
             }
             user_dislikes["dislikes"].append(car_data)
 
+        # If user dislikes is empty, return random cars
+    if not user_dislikes["dislikes"]:
+        user_dislikes["dislikes"] = get_random_cars_if_empty()
+
     return user_dislikes
+
+def get_random_cars_if_empty():
+    # Function to return a list of 25 random cars when user likes or dislikes are empty
+    random_cars = []
+    for _ in range(25):
+        random_car = {
+            "id": str(ObjectId()),  # Generate a random ObjectId as the car ID
+            "make": random.choice(["Toyota", "Honda", "Ford", "Chevrolet"]),
+            "gearbox": random.choice(["Manual", "Automatic"]),
+            "fueltype": random.choice(["Gasoline", "Diesel", "Petrol", "Hybrid", "Electric"]),
+            "price": random.uniform(10000, 50000),
+            "engineSizeInLiter": random.uniform(1.0, 3.5)
+        }
+        random_cars.append(random_car)
+
+    return random_cars
 
 def load_likes_interaction(userId):
     # Load user likes interaction data for further processing
