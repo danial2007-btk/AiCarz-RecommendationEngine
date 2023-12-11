@@ -220,7 +220,7 @@ def mainReturn(carIds):
 
         # Replace None values with null
         car_profile = {
-            "id": car_id,
+            "_id": car_id,
             "make": make,
             "gearbox": gearbox,
             "price": price,
