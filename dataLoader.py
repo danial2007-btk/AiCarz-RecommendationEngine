@@ -26,20 +26,6 @@ def connect_to_mongodb():
 # Establish MongoDB connection
 collection = connect_to_mongodb()
 
-# # Connect to MongoDB
-# # connection_string = "mongodb+srv://web_scrapping_read_only:rVXnGzz3jZvnRZx1@cluster0.uarux4m.mongodb.net/?retryWrites=true&w=majority"
-# # database_name = "aicarsdb"
-# # cardb = "cars"
-# client = pymongo.MongoClient(connection_string)
-# db = client[database_name]
-# collection = db[car_db]
-
-
-# # Establish MongoDB connection
-# client = pymongo.MongoClient(connection_string)
-# db = client[database_name]
-# collection = db[car_db]
-
 def dataGather(collection, car_id):
     # try:
     car_object_id = ObjectId(car_id)
