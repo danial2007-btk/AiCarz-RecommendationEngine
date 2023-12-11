@@ -5,17 +5,6 @@ import numpy as np
 
 from dataLoader import connect_to_mongodb
 
-# def connect_to_mongodb():
-#     # Function to establish a connection to MongoDB
-#     connection_string = "mongodb+srv://web_scrapping_read_only:rVXnGzz3jZvnRZx1@cluster0.uarux4m.mongodb.net/?retryWrites=true&w=majority"
-#     database_name = "aicarsdb"
-#     car_collection_name = "cars"
-#     client = pymongo.MongoClient(connection_string)
-#     db = client[database_name]
-#     car_collection = db[car_collection_name]
-
-#     return car_collection
-
 def get_user_likes_dislikes(collection, user_id, coordinates):
     # Function to retrieve user's likes and dislikes from the MongoDB collection
     collection_data = collection.find({
