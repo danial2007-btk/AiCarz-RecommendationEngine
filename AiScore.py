@@ -35,7 +35,5 @@ class AIScoreCalculator:
         )
 
         calculate_score = (self.weight1 * score1) - (self.weight2 * score2) + self.weight3 *(score3 * score4)
-        # print("calculate Score",calculate_score)
-        # print("AI Score",aiscore_input.last_ai_score)
         ai_score = aiscore_input.last_ai_score + calculate_score / 2
         return ai_score
