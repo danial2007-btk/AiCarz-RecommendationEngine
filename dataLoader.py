@@ -34,8 +34,8 @@ def dataGather(collection, car_id):
     if car_data:
         time_spent_values = [time["durationInMilliseconds"] for time in car_data.get("timeSpent", [])]
         mean_time_spent = sum(time_spent_values) / len(time_spent_values) if time_spent_values else 0
-
-        ai_score_last_value = car_data.get("AiScore", [])[0] if car_data.get("AiScore") else 0
+        ai_score_last_value = car_data.get("AiScore", [])[-1] if car_data.get("AiScore") else 0
+        
         total_likes = len(car_data.get("likes", []))
         total_dislikes = len(car_data.get("dislikes", []))
         total_favorites = len(car_data.get("favorites", []))

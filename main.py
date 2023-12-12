@@ -1,12 +1,18 @@
 from dataLoader import dataGather, collection
 from AiScore import AIScoreInput, AIScoreCalculator
+from pymongo import MongoClient
+from bson import ObjectId
+
+updateClient = MongoClient("mongodb+srv://aicarz:kxnJuY2Vc1UtHYVF@cluster0.uarux4m.mongodb.net/?retryWrites=true&w=majority")
+carzdb = updateClient["aicarsdb"]
+carzcollection = carzdb["cars"]
 
 def AiScoreMain(car_id):
         
-    car_id = car_id
+    carId = car_id
 
     # Assuming gathered_data is the result of dataGather function
-    aiscore_input = dataGather(collection, car_id)
+    aiscore_input = dataGather(collection, carId)
 
     # Create an instance of AIScoreCalculator
     aiscore_calculator = AIScoreCalculator()
@@ -15,9 +21,28 @@ def AiScoreMain(car_id):
     ai_score = aiscore_calculator.calculate_ai_score(aiscore_input)
 
     # Print the AI Score
-    ai_score_rounded = round(ai_score, 4)
+    getAiScore = round(ai_score, 4)
+    
+    # Specify the filter criteria (in this case, finding a document by _id)
+    filter_criteria = {"_id": ObjectId(carId)}
 
-    return ai_score_rounded
+    if getAiScore is not None:
+            
+        # Specify the update operation (in this case, using $push to update the AiScore field)
+        update_operation = {"$push": {"AiScore": getAiScore}}
+
+        # Perform the update
+        result = carzcollection.update_one(filter_criteria, update_operation)
+
+        # Check if the update was successful
+        if result.modified_count > 0:
+            return ("Update successful")
+        else:
+            return ("No matching document found")
+
+    else:
+        return ("CarId not found / AiScore not found")
+
 
 
 # The below work is a structure of Main function where the feed manager will be called and the recommendations will be generated

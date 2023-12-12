@@ -26,7 +26,7 @@ async def calculate_ai_score(
     try:
         # Function named AiScoreMain that takes a car_id as input
         ai_score = AiScoreMain(car_data.carid)
-        return {"CarId": car_data.carid, "AIScore": ai_score}
+        return {"Response": ai_score}
 
     except Exception as e:
         # Handle exceptions, log them, and return an appropriate response
