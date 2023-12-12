@@ -8,4 +8,3 @@ uvicorn
 bson
 scikit-learn
 scikit-surprise
-random
