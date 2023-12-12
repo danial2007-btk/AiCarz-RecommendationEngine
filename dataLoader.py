@@ -113,69 +113,53 @@ def load_car_profiles_from_mongodb(coordinates):
     return car_profiles
 
 
-def load_user_likes(userId):
+def load_user_likes(user_id):
     # Load user likes from MongoDB based on user ID
-    user_data = collection.find({"likes": ObjectId(userId)})
-    user_likes = {"user_id": userId, "likes": []}
+    user_data = collection.find({"likes": ObjectId(user_id)})
+    user_likes = {"user_id": user_id, "likes": extract_car_data(user_data)}
 
-    # Extract liked car information
-    for doc in user_data:
-        if doc:
-            car_data = {
-                "id": str(doc["_id"]),
-                "make": doc["make"],
-                "gearbox": doc["gearbox"],
-                "fueltype": doc["fuelType"],
-                "price": doc["price"],
-                "engineSizeInLiter": doc["engineSizeInLiter"]
-            }
-            user_likes["likes"].append(car_data)
-
-            # If user likes is empty, return random cars
+    # If user_likes["likes"] is empty, get random likes from the collection (up to 25)
     if not user_likes["likes"]:
-        user_likes["likes"] = get_random_cars_if_empty()
+        user_likes["likes"].extend(get_random_cars(user_id, "likes", limit=25))
 
     return user_likes
 
-def load_user_dislikes(userId):
+def load_user_dislikes(user_id):
     # Load user dislikes from MongoDB based on user ID
-    user_data = collection.find({"dislikes": ObjectId(userId)})
-    user_dislikes = {"user_id": userId, "dislikes": []}
+    user_data = collection.find({"dislikes": ObjectId(user_id)})
+    user_dislikes = {"user_id": user_id, "dislikes": extract_car_data(user_data)}
 
-    # Extract disliked car information
-    for doc in user_data:
-        if doc:
-            car_data = {
-                "id": str(doc["_id"]),
-                "make": doc["make"],
-                "gearbox": doc["gearbox"],
-                "fueltype": doc["fuelType"],
-                "price": doc["price"],
-                "engineSizeInLiter": doc["engineSizeInLiter"]
-            }
-            user_dislikes["dislikes"].append(car_data)
-
-        # If user dislikes is empty, return random cars
+    # If user_dislikes["dislikes"] is empty, get random dislikes from the collection (up to 25)
     if not user_dislikes["dislikes"]:
-        user_dislikes["dislikes"] = get_random_cars_if_empty()
+        user_dislikes["dislikes"].extend(get_random_cars(user_id, "dislikes", limit=25))
 
     return user_dislikes
 
-def get_random_cars_if_empty():
-    # Function to return a list of 25 random cars when user likes or dislikes are empty
-    random_cars = []
-    for _ in range(25):
-        random_car = {
-            "id": str(ObjectId()),  # Generate a random ObjectId as the car ID
-            "make": random.choice(["Toyota", "Honda", "Ford", "Chevrolet"]),
-            "gearbox": random.choice(["Manual", "Automatic"]),
-            "fueltype": random.choice(["Gasoline", "Diesel", "Petrol", "Hybrid", "Electric"]),
-            "price": random.uniform(10000, 50000),
-            "engineSizeInLiter": random.uniform(1.0, 3.5)
+def extract_car_data(user_data):
+    # Extract car information from user data
+    return [
+        {
+            "id": str(doc["_id"]),
+            "make": doc["make"],
+            "gearbox": doc["gearbox"],
+            "fueltype": doc["fuelType"],
+            "price": doc["price"],
+            "engineSizeInLiter": doc["engineSizeInLiter"]
         }
-        random_cars.append(random_car)
+        for doc in user_data
+    ]
 
-    return random_cars
+def get_random_cars(user_id, category, limit=25):
+    # Implement a function to retrieve random cars from the MongoDB collection
+    query = {"$and": [{f"{category}": {"$ne": ObjectId(user_id)}}, {"_id": {"$nin": get_user_ids(user_id, category)}}]}
+    random_cars = collection.find(query).limit(limit)
+
+    return extract_car_data(random_cars)
+
+def get_user_ids(user_id, category):
+    # Get a list of IDs from the specified category (likes or dislikes) for the given user
+    user_data = collection.find({category: ObjectId(user_id)})
+    return [doc["_id"] for doc in user_data]
 
 def load_likes_interaction(userId):
     # Load user likes interaction data for further processing
