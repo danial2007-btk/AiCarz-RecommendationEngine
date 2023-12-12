@@ -237,6 +237,7 @@ def mainReturn(carIds):
         currency = item.get('currency', None)
         description = item.get('description', None)
         cityName = item.get('cityName', None)
+        fuelConsumptionInMPG = item.get('fuelConsumptionInMPG', None)
          # Check for the existence of the 'location' field
         location_data = item.get('location')
         coordinates = location_data.get('coordinates', []) if location_data else []
@@ -245,30 +246,31 @@ def mainReturn(carIds):
         # Replace None values with null
         car_profile = {
             "_id": car_id,
-            "make": make,
-            "gearbox": gearbox,
-            "price": price,
-            "fueltype": fuelType,
-            "engineSizeInLiter": engineSizeInLiter,
             "carBuyLink": carBuyLink,
             "carImages": carImages,
+            "make": make,
             "model": model,
             "variant": variant,
+            "cityName": cityName,
             "mileageInMiles": mileageInMiles,
             "year": year,
             "ageIdentifier": ageIdentifier,
+            "fuelType": fuelType,
             "bodyType": bodyType,
+            "engineSizeInLiter": engineSizeInLiter,
+            "gearbox": gearbox,
+            "price": price,
             "currency": currency,
             "description": description,
-            "cityName": cityName,
             "location": {
                 "type": "Point",
                 "coordinates": coordinates
-            }
+            },
+            "fuelConsumptionInMPG": fuelConsumptionInMPG
         }
 
         car_profiles.append(car_profile)
     
-    # print("Inside DataLoader mainReturn: ", car_profiles)
+    print("Inside DataLoader mainReturn: ", car_profile)
         
-    return car_profiles
+    return car_profile
