@@ -74,7 +74,7 @@ def load_car_profiles_from_mongodb(coordinates):
                     'type': 'Point',
                     'coordinates': coordinates
                 },
-                '$maxDistance': 321869
+                '$maxDistance': 482803
             }
         },
         'isActive': True  # Add this filter to check for isActive field
@@ -84,10 +84,12 @@ def load_car_profiles_from_mongodb(coordinates):
         'gearbox': 1,
         'engineSizeInLiter': 1,
         'price': 1,
-        '_id': 1
+        '_id': 1,
+        'AiScore':1
     })
 
     data = list(result)
+    # print("Data",data)
     car_profiles = []
 
     # Extract relevant information from MongoDB query results
@@ -98,6 +100,7 @@ def load_car_profiles_from_mongodb(coordinates):
         gearbox = item.get('gearbox', '')
         engineSizeInLiter = item.get('engineSizeInLiter', 0.0)
         price = item.get('price', 0.0)
+        aiScore = item.get('AiScore', 0.0)[-1]
 
         car_profile = {
             "id": car_id,
@@ -105,11 +108,13 @@ def load_car_profiles_from_mongodb(coordinates):
             "gearbox": gearbox,
             "price": price,
             "fueltype": fuelType,
-            "engineSizeInLiter": engineSizeInLiter
+            "engineSizeInLiter": engineSizeInLiter,
+            "AiScore": aiScore
         }
 
         car_profiles.append(car_profile)
 
+    # print("Inside the MongoDB Fucntion",car_profiles)
     return car_profiles
 
 
@@ -224,8 +229,9 @@ def mainReturn(carIds):
         fuelConsumptionInMPG = item.get('fuelConsumptionInMPG', None)
          # Check for the existence of the 'location' field
         location_data = item.get('location')
-        coordinates = location_data.get('coordinates', []) if location_data else []
-
+        coordinates = location_data.get('coordinates', None) if location_data else None
+        if coordinates is None:
+            location_data = None
 
         # Replace None values with null
         car_profile = {
@@ -246,7 +252,7 @@ def mainReturn(carIds):
             "price": price,
             "currency": currency,
             "description": description,
-            "location": {
+            "location": None if coordinates is None else {
                 "type": "Point",
                 "coordinates": coordinates
             },
