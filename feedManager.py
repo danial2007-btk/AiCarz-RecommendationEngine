@@ -41,16 +41,16 @@ def get_random_car_ids(car_profiles, num_cars=10):
     random_car_ids = set(random.sample(all_car_ids, min(num_cars, len(all_car_ids))))
     return random_car_ids
 
-def feedCarId(coordinates):
+def feedCarId(user_id,coordinates):
 
     # Assuming car_profiles is the result from load_car_profiles_from_mongodb
-    car_profiles = load_car_profiles_from_mongodb(coordinates)
+    car_profiles = load_car_profiles_from_mongodb(user_id, coordinates)
 
     # Extract unique car IDs by AI score range
     unique_car_ids_by_ai_score_range = extract_car_ids_by_ai_score_range(car_profiles)
 
     # Get unique 10 random car IDs
-    unique_random_car_ids = get_random_car_ids(car_profiles, num_cars=10)
+    unique_random_car_ids = get_random_car_ids(car_profiles, num_cars=6)
 
     # Combine unique car IDs from both sources
     final_unique_car_ids = list(unique_car_ids_by_ai_score_range.union(unique_random_car_ids))

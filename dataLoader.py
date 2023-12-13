@@ -16,7 +16,7 @@ database_name = "aicarsdb"
 car_db = "cars"
 
 def connect_to_mongodb():
-    # Function to establish a connection to MongoDB
+# Function to establish a connection to MongoDB
     client = pymongo.MongoClient(connection_string)
     db = client[database_name]
     collection = db[car_db]
@@ -65,7 +65,7 @@ def dataGather(collection, car_id):
    
 # the data loader function for the recommadation model and the feed manager
 
-def load_car_profiles_from_mongodb(coordinates):
+def load_car_profiles_from_mongodb(user_id, coordinates):
     # Load car profiles from MongoDB based on the specified city and user ID
     result = collection.find({
         'location': {
@@ -77,8 +77,13 @@ def load_car_profiles_from_mongodb(coordinates):
                 '$maxDistance': 482803
             }
         },
-        'isActive': True  # Add this filter to check for isActive field
-    }, {
+        'isActive': True,  # Add this filter to check for isActive field
+        '$and': [
+        {'likes': {'$nin': [ObjectId(user_id)]}},
+        {'dislikes': {'$nin': [ObjectId(user_id)]}}
+        ]
+    }, 
+    {
         'make': 1,
         'fuelType': 1,
         'gearbox': 1,
@@ -89,7 +94,6 @@ def load_car_profiles_from_mongodb(coordinates):
     })
 
     data = list(result)
-    # print("Data",data)
     car_profiles = []
 
     # Extract relevant information from MongoDB query results
@@ -114,7 +118,6 @@ def load_car_profiles_from_mongodb(coordinates):
 
         car_profiles.append(car_profile)
 
-    # print("Inside the MongoDB Fucntion",car_profiles)
     return car_profiles
 
 
@@ -126,8 +129,9 @@ def load_user_likes(user_id):
     # If user_likes["likes"] is empty, get random likes from the collection (up to 25)
     if not user_likes["likes"]:
         user_likes["likes"].extend(get_random_cars(user_id, "likes", limit=25))
-
+    
     return user_likes
+
 
 def load_user_dislikes(user_id):
     # Load user dislikes from MongoDB based on user ID
@@ -137,7 +141,7 @@ def load_user_dislikes(user_id):
     # If user_dislikes["dislikes"] is empty, get random dislikes from the collection (up to 25)
     if not user_dislikes["dislikes"]:
         user_dislikes["dislikes"].extend(get_random_cars(user_id, "dislikes", limit=25))
-
+        
     return user_dislikes
 
 def extract_car_data(user_data):
@@ -182,8 +186,6 @@ def load_likes_interaction(userId):
 
     return user_car_data
 
-# aa = load_likes_interaction("6572fb515ec48c65ee11d8b5")
-# print(aa)
 
 def load_dislikes_interaction(userId):
     # Load user dislikes interaction data for further processing

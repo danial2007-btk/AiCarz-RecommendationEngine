@@ -5,3 +5,4 @@
 !.elasticbeanstalk/*.global.yml
 
 testFeedManage.py
+testDataloader.py

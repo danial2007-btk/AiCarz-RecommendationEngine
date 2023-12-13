@@ -50,12 +50,12 @@ async def feed_manager(
         coordinates = []
         coordinates.append(feed_data.longitude)
         coordinates.append(feed_data.latitude)
-                        
+        print(coordinates)
         # Function named AiScoreMain that takes a car_id as input
         carIds_ouput = FeedManagerMain(feed_data.user_id, coordinates)        
         return carIds_ouput
 
     except Exception as e:
         # Handle exceptions, log them, and return an appropriate response
-        raise HTTPException(status_code=500, detail="Internal Server Error") from e
+        raise HTTPException(status_code=500, detail="Internal Server Error::") from e
     
