@@ -2,8 +2,22 @@ from fastapi import FastAPI, HTTPException, Depends, Query
 from pydantic import BaseModel
 
 from main import AiScoreMain,FeedManagerMain
+from mongodb import mongodbConn, carzcollection, carzdb
+from contextlib import asynccontextmanager
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Load the ML model
+    print("======> loading statup event")
+    # ml_models["answer_to_everything"] = fake_answer_to_everything_ml_model
+    yield
+    # Clean up the ML models and release the resources
+    print("xxxxxxxx   shurting down event")
+    mongodbConn.close()
+    print("mongodb disconnected")    
+    
+app = FastAPI(lifespan=lifespan)
+
 
 # The single valid API key
 API_key = "lkjINRhG1rKRNc2kE5xfcK0hFJaz6Kvz1jux"

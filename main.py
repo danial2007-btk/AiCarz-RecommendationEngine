@@ -1,16 +1,13 @@
-from pymongo import MongoClient
 from bson import ObjectId
 import concurrent.futures
 import time
+from mongodb import mongodbConn, carzcollection, carzdb
 
 # Calling Function form the Files
 from AiScore import AIScoreInput, AIScoreCalculator
-from dataLoader import dataGather, collection
+from dataLoader import dataGather
 
 
-updateClient = MongoClient("mongodb+srv://aicarz:kxnJuY2Vc1UtHYVF@cluster0.uarux4m.mongodb.net/?retryWrites=true&w=majority")
-carzdb = updateClient["aicarsdb"]
-carzcollection = carzdb["cars"]
 
 def AiScoreMain(car_id):
         
