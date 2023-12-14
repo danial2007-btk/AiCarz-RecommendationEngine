@@ -19,7 +19,7 @@ def extract_car_ids_by_ai_score_range(car_profiles):
                 range_car_ids.add(profile['id'])
         
         # If there are fewer than 2 car IDs in the range, add from the default range
-        while len(range_car_ids) < 2:
+        while len(range_car_ids) < 1:
             for profile in car_profiles:
                 ai_scores = profile.get('AiScore', [2.5])
 
@@ -36,7 +36,7 @@ def extract_car_ids_by_ai_score_range(car_profiles):
 
     return unique_car_ids
 
-def get_random_car_ids(car_profiles, num_cars=10):
+def get_random_car_ids(car_profiles, num_cars=6):
     all_car_ids = [profile['id'] for profile in car_profiles]
     random_car_ids = set(random.sample(all_car_ids, min(num_cars, len(all_car_ids))))
     return random_car_ids
@@ -56,7 +56,7 @@ def feedCarId(user_id,coordinates):
     final_unique_car_ids = list(unique_car_ids_by_ai_score_range.union(unique_random_car_ids))
 
     # Ensure the final list has exactly 20 unique car IDs
-    final_unique_car_ids = final_unique_car_ids[:20]
+    final_unique_car_ids = final_unique_car_ids
 
     print("Final Unique Car IDs:",final_unique_car_ids)
     print("Len",len(final_unique_car_ids))

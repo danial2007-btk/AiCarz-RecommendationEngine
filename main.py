@@ -132,11 +132,36 @@ def FeedManagerMain(user_id, coordinates):
     # print(recommended_car_pairs)
     
     likeCarIds = likeRecommendation(user_id, coordinates)
-    print("Like Car Ids",likeCarIds)
+    # print("Like Car Ids",likeCarIds)
+    
     dislikeCarIds = dislikeRecommendation(user_id, coordinates)
-    print("Dislike Car Ids",dislikeCarIds)
+    
+    # print("Dislike Car Ids",dislikeCarIds)
+    
+    feedCarList = recommended_car_pairs + likeCarIds[:7] + dislikeCarIds[:7]
+    
+    carGets = []
+    
+    for ids in feedCarList:
+        carGets.append(mainReturn(ids))
+        
+    # print("Length of CarGets",len(carGets))
+
+    return carGets
     
     
+# user_id= "65746537056860252d645491"
+# longitude= -0.4320029
+# latitude= 51.2620499
+
+# coordinates = []
+# coordinates.append(longitude)
+# coordinates.append(latitude)
+# print(coordinates)
+
+# aa = FeedManagerMain(user_id, coordinates)
+# print(aa)
+
 
 #    # Example usage likes recommadation
 #     user_car_data_interaction = load_likes_interaction(user_id)
