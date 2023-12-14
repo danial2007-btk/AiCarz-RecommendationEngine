@@ -7,7 +7,7 @@ from mongodb import mongodbConn, carzcollection, carzdb
 from AiScore import AIScoreInput, AIScoreCalculator
 from dataLoader import dataGather
 
-
+collection = carzcollection
 
 def AiScoreMain(car_id):
         
@@ -48,18 +48,20 @@ def AiScoreMain(car_id):
 
 
 # The below work is a structure of Main function where the feed manager will be called and the recommendations will be generated
-from dataLoader import load_car_profiles_from_mongodb,mainReturn, load_user_likes, load_likes_interaction, load_user_dislikes, load_dislikes_interaction  
+# from dataLoader import load_car_profiles_from_mongodb,mainReturn, load_user_likes, load_likes_interaction, load_user_dislikes, load_dislikes_interaction  
 from modelLike import get_top_recommendations, calculate_cosine_similarity, preprocess_car_profiles, preprocess_user_car_profiles, train_collaborative_filtering_model, load_user_car_data
 from feedManager import feedCarId
 from modelDislike import get_top_recommendations1, calculate_cosine_similarity1, preprocess_car_profiles1, preprocess_user_car_profiles1, train_collaborative_filtering_model1, load_user_car_data1
 
+from dataLoader import getData, get_car_profiles_by_user_like,get_car_profiles_by_user_dislike
+ 
 
-def likeCarId(user_id, coordinates):
+def likeCarId(user_car_data_interaction, user_car_profiles, car_profiles):
     
    # Example usage likes recommadation
-    user_car_data_interaction = load_likes_interaction(user_id)
-    user_car_profiles = load_user_likes(user_id)
-    car_profiles = load_car_profiles_from_mongodb(user_id,coordinates)
+    # user_car_data_interaction = load_likes_interaction(user_id)
+    # user_car_profiles = load_user_likes(user_id)
+    # car_profiles = load_car_profiles_from_mongodb(user_id,coordinates)
 
     numerical_features = ['price', 'engineSizeInLiter']
     categorical_features = ['make', 'gearbox', 'fueltype']
@@ -109,17 +111,23 @@ def dislikeCarId(user_id, coordinates):
 
 def FeedManagerMain(user_id, coordinates):
     # User ID
-    user_id = user_id
-
+    user_id = user_id 
+    
     # User coordinates
     coordinates = coordinates
     
+    # likeCarId = get_car_profiles_by_user_dislike(user_id)
+    
+    car_profiles_load, car_profiles_like, car_profiles_dislike = getData(user_id, coordinates)
+    
+    
+   
     # Use ThreadPoolExecutor for parallel execution
     with concurrent.futures.ThreadPoolExecutor() as executor:
         # Submit the functions for parallel execution
-        future_recommended = executor.submit(feedCarId, user_id, coordinates)
-        future_like = executor.submit(likeCarId, user_id, coordinates)        
-        future_dislike = executor.submit(dislikeCarId, user_id, coordinates)
+        future_recommended = executor.submit(feedCarId, car_profiles_load)
+        future_like = executor.submit(likeCarId, car_profiles_like)        
+        future_dislike = executor.submit(dislikeCarId, car_profiles_dislike)
         
         # Wait for all functions to complete
         concurrent.futures.wait([future_recommended, future_like, future_dislike])

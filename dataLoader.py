@@ -1,7 +1,10 @@
 from bson import ObjectId
 import pymongo
+import time
 import logging
 import random
+from concurrent.futures import ThreadPoolExecutor
+
 from mongodb import mongodbConn, carzcollection, carzdb
 
 collection = carzcollection
@@ -61,54 +64,114 @@ def dataGather(collection, car_id):
 # the data loader function for the recommadation model and the feed manager
 
 
-def load_car_profiles_from_mongodb(user_id, coordinates):
+def load_car_profiles_from_mongodb(user_id, user_coordinates):
     # Load car profiles from MongoDB based on the specified city and user ID
-    result = collection.find(
-        {
-            "location": {
-                "$near": {
-                    "$geometry": {"type": "Point", "coordinates": coordinates},
-                    "$maxDistance": 482803,
-                }
-            },
-            "isActive": True,  # Add this filter to check for isActive field
-            "$and": [
-                {"likes": {"$nin": [ObjectId(user_id)]}},
-                {"dislikes": {"$nin": [ObjectId(user_id)]}},
-            ],
-        },
-        {
-            "make": 1,
-            "fuelType": 1,
-            "gearbox": 1,
-            "engineSizeInLiter": 1,
-            "price": 1,
-            "_id": 1,
-            "AiScore": 1,
-        },
-    )
 
-    data = list(result)
-    car_profiles = []
+    startTime = time.time()
+
+    print("Inside DataLoader load_car_profiles_from_mongodb: ")
+    pipeline = [
+        {
+            "$geoNear": {
+                "near": {
+                    "type": "Point",
+                    "coordinates": user_coordinates,
+                },
+                "distanceField": "distance",
+                "spherical": True,
+                "maxDistance": 500 * 1000,  # in meters
+            },
+        },
+        {
+            "$match": {
+                "isActive": True,
+            },
+        },
+        {
+            "$lookup": {
+                "from": "users",
+                "localField": "_id",
+                "foreignField": "likes",
+                "as": "likedByUser",
+            },
+        },
+        {
+            "$lookup": {
+                "from": "users",
+                "localField": "_id",
+                "foreignField": "dislikes",
+                "as": "dislikedByUser",
+            },
+        },
+        {
+            "$match": {
+                "likedByUser": {"$not": {"$elemMatch": {"$eq": user_id}}},
+                "dislikedByUser": {"$not": {"$elemMatch": {"$eq": user_id}}},
+            },
+        },
+        {
+            "$addFields": {
+                "lastAiScore": {"$arrayElemAt": ["$AiScore", -1]},
+            },
+        },
+        {
+            "$project": {
+                "carBuyLink": 1,
+                "carImages": 1,
+                "make": 1,
+                "model": 1,
+                "variant": 1,
+                "mileageInMiles": 1,
+                "year": 1,
+                "ageIdentifier": 1,
+                "fuelType": 1,
+                "bodyType": 1,
+                "engineSizeInLiter": 1,
+                "gearbox": 1,
+                "price": 1,
+                "currency": 1,
+                "cityName": 1,
+                "location": 1,
+                "distance": 1,
+                "lastAiScore": 1,
+            },
+        },
+        {
+            "$limit": 1000,
+        },
+        {
+            "$sort": {
+                "lastAiScore": -1,
+            },
+        },
+    ]
+
+    # Execute the pipeline
+    result = collection.aggregate(pipeline)
+
+    endTime = time.time()
+    print("Time taken to load car profiles from MongoDB: ", endTime - startTime)
 
     # Extract relevant information from MongoDB query results
-    for item in data:
+    car_profiles = []
+
+    for item in result:
         car_id = str(item.get("_id", ""))
         make = item.get("make", "")
-        fuelType = item.get("fuelType", "")
+        fuel_type = item.get("fuelType", "")
         gearbox = item.get("gearbox", "")
-        engineSizeInLiter = item.get("engineSizeInLiter", 0.0)
+        engine_size_in_liter = item.get("engineSizeInLiter", 0.0)
         price = item.get("price", 0.0)
-        aiScore = item.get("AiScore", 0.0)[-1]
+        ai_score = item.get("lastAiScore", 0.0)
 
         car_profile = {
             "id": car_id,
             "make": make,
             "gearbox": gearbox,
             "price": price,
-            "fueltype": fuelType,
-            "engineSizeInLiter": engineSizeInLiter,
-            "AiScore": aiScore,
+            "fuel_type": fuel_type,
+            "engine_size_in_liter": engine_size_in_liter,
+            "ai_score": ai_score,
         }
 
         car_profiles.append(car_profile)
@@ -116,62 +179,108 @@ def load_car_profiles_from_mongodb(user_id, coordinates):
     return car_profiles
 
 
-def load_user_likes(user_id):
-    # Load user likes from MongoDB based on user ID
-    user_data = collection.find({"likes": ObjectId(user_id)})
-    user_likes = {"user_id": user_id, "likes": extract_car_data(user_data)}
+def get_car_profiles_by_user_like(user_id):
+    print("Inside DataLoader get_car_profiles_by_user_like: ")
 
-    # If user_likes["likes"] is empty, get random likes from the collection (up to 25)
-    if not user_likes["likes"]:
-        user_likes["likes"].extend(get_random_cars(user_id, "likes", limit=25))
-
-    return user_likes
-
-
-def load_user_dislikes(user_id):
-    # Load user dislikes from MongoDB based on user ID
-    user_data = collection.find({"dislikes": ObjectId(user_id)})
-    user_dislikes = {"user_id": user_id, "dislikes": extract_car_data(user_data)}
-
-    # If user_dislikes["dislikes"] is empty, get random dislikes from the collection (up to 25)
-    if not user_dislikes["dislikes"]:
-        user_dislikes["dislikes"].extend(get_random_cars(user_id, "dislikes", limit=25))
-
-    return user_dislikes
-
-
-def extract_car_data(user_data):
-    # Extract car information from user data
-    return [
+    pipeline = [
         {
-            "id": str(doc["_id"]),
-            "make": doc["make"],
-            "gearbox": doc["gearbox"],
-            "fueltype": doc["fuelType"],
-            "price": doc["price"],
-            "engineSizeInLiter": doc["engineSizeInLiter"],
-        }
-        for doc in user_data
+            "$match": {
+                "likes": user_id,
+            },
+        },
+        {
+            "$project": {
+                "make": 1,
+                "fuelType": 1,
+                "bodyType": 1,
+                "engineSizeInLiter": 1,
+                "gearbox": 1,
+                "price": 1,
+                "lastAiScore": 1,
+            },
+        },
     ]
 
+    # Execute the pipeline
+    result = collection.aggregate(pipeline)
 
-def get_random_cars(user_id, category, limit=25):
-    # Implement a function to retrieve random cars from the MongoDB collection
-    query = {
-        "$and": [
-            {f"{category}": {"$ne": ObjectId(user_id)}},
-            {"_id": {"$nin": get_user_ids(user_id, category)}},
-        ]
-    }
-    random_cars = collection.find(query).limit(limit)
+    # Extract car profiles from MongoDB query results
+    car_profiles = []
 
-    return extract_car_data(random_cars)
+    for item in result:
+        car_id = str(item.get("_id", ""))
+        make = item.get("make", "")
+        gearbox = item.get("gearbox", "")
+        price = item.get("price", 0.0)
+        fuel_type = item.get("fuelType", "")
+        engine_size_in_liter = item.get("engineSizeInLiter", 0.0)
+        ai_score = item.get("lastAiScore", 0.0)
+
+        car_profile = {
+            "id": car_id,
+            "make": make,
+            "gearbox": gearbox,
+            "price": price,
+            "fuel_type": fuel_type,
+            "engine_size_in_liter": engine_size_in_liter,
+            "ai_score": ai_score,
+        }
+
+        car_profiles.append(car_profile)
+
+    return car_profiles
 
 
-def get_user_ids(user_id, category):
-    # Get a list of IDs from the specified category (likes or dislikes) for the given user
-    user_data = collection.find({category: ObjectId(user_id)})
-    return [doc["_id"] for doc in user_data]
+def get_car_profiles_by_user_dislike(user_id):
+    print("Inside DataLoader get_car_profiles_by_user_dislike: ")
+
+    pipeline = [
+        {
+            "$match": {
+                "dislikes": user_id,
+            },
+        },
+        {
+            "$project": {
+                "make": 1,
+                "fuelType": 1,
+                "bodyType": 1,
+                "engineSizeInLiter": 1,
+                "gearbox": 1,
+                "price": 1,
+                "lastAiScore": 1,
+            },
+        },
+    ]
+
+    # Execute the pipeline
+    result = collection.aggregate(pipeline)
+
+    # Extract car profiles from MongoDB query results
+    car_profiles = []
+
+    for item in result:
+        car_id = str(item.get("_id", ""))
+        make = item.get("make", "")
+        gearbox = item.get("gearbox", "")
+        price = item.get("price", 0.0)
+        fuel_type = item.get("fuelType", "")
+        engine_size_in_liter = item.get("engineSizeInLiter", 0.0)
+        ai_score = item.get("lastAiScore", 0.0)
+
+        car_profile = {
+            "id": car_id,
+            "make": make,
+            "gearbox": gearbox,
+            "price": price,
+            "fuel_type": fuel_type,
+            "engine_size_in_liter": engine_size_in_liter,
+            "ai_score": ai_score,
+        }
+
+        car_profiles.append(car_profile)
+
+    return car_profiles
 
 
 def load_likes_interaction(userId):
@@ -262,3 +371,35 @@ def mainReturn(carIds):
     # print("Inside DataLoader mainReturn: ", car_profile)
 
     return car_profile
+
+
+def getData(user_id, coordinates):
+    # User ID
+    user_id = user_id
+    # User coordinates
+    coordinates = coordinates
+    print("inside the getData function")
+
+    try:
+        startTime = time.time()
+
+        # Use ThreadPoolExecutor for parallel execution
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            future_load = executor.submit(
+                load_car_profiles_from_mongodb, user_id, coordinates
+            )
+            future_like = executor.submit(get_car_profiles_by_user_like, user_id)
+            future_dislike = executor.submit(get_car_profiles_by_user_dislike, user_id)
+
+        # Retrieve results from the futures
+        car_profiles_load = future_load.result()
+        car_profiles_like = future_like.result()
+        car_profiles_dislike = future_dislike.result()
+        
+        endTime = time.time()
+        print("Took: ", endTime - startTime)
+        
+    except Exception as e:
+        print("Error in getData function: ", e)
+
+    return car_profiles_load, car_profiles_like, car_profiles_dislike
