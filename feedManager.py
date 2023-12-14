@@ -54,8 +54,5 @@ def feedCarId(car_profiles):
 
     # Ensure the final list has exactly 20 unique car IDs
     final_unique_car_ids = final_unique_car_ids[:20]
-
-    print("Final Unique Car IDs:",final_unique_car_ids)
-    print("Len",len(final_unique_car_ids))
     
     return final_unique_car_ids

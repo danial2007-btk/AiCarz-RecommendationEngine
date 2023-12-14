@@ -118,31 +118,37 @@ def FeedManagerMain(user_id, coordinates):
     
     # likeCarId = get_car_profiles_by_user_dislike(user_id)
     
-    car_profiles_load, car_profiles_like, car_profiles_dislike = getData(user_id, coordinates)
+    # car_profiles_load, car_profiles_like, car_profiles_dislike = getData(user_id, coordinates)
     
+    aa = get_car_profiles_by_user_like(user_id)
     
+    # print("car_profiles_load",car_profiles_load)
+    # print("car_profiles_like",car_profiles_like)
+    # print("car_profiles_dislike",car_profiles_dislike)
+    
+    return []
    
-    # Use ThreadPoolExecutor for parallel execution
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        # Submit the functions for parallel execution
-        future_recommended = executor.submit(feedCarId, car_profiles_load)
-        future_like = executor.submit(likeCarId, car_profiles_like)        
-        future_dislike = executor.submit(dislikeCarId, car_profiles_dislike)
+    # # Use ThreadPoolExecutor for parallel execution
+    # with concurrent.futures.ThreadPoolExecutor() as executor:
+    #     # Submit the functions for parallel execution
+    #     future_recommended = executor.submit(feedCarId, car_profiles_load)
+    #     future_like = executor.submit(likeCarId, car_profiles_like)        
+    #     future_dislike = executor.submit(dislikeCarId, car_profiles_dislike)
         
-        # Wait for all functions to complete
-        concurrent.futures.wait([future_recommended, future_like, future_dislike])
+    #     # Wait for all functions to complete
+    #     concurrent.futures.wait([future_recommended, future_like, future_dislike])
         
-        # Get the results
-        recommended_car_pairs = future_recommended.result()
-        likecarid = future_like.result()
-        dislikecarid = future_dislike.result()
+    #     # Get the results
+    #     recommended_car_pairs = future_recommended.result()
+    #     likecarid = future_like.result()
+    #     dislikecarid = future_dislike.result()
 
-    final_recommendation = recommended_car_pairs + likecarid + dislikecarid
-    # return final_recommation
+    # final_recommendation = recommended_car_pairs + likecarid + dislikecarid
+    # # return final_recommation
 
-    carGets = []
+    # carGets = []
     
-    for ids in final_recommendation:
-        carGets.append(mainReturn(ids))
+    # for ids in final_recommendation:
+    #     carGets.append(mainReturn(ids))
 
-    return carGets
+    # return carGets
