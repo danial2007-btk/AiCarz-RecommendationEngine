@@ -263,6 +263,6 @@ def mainReturn(carIds):
 
         car_profiles.append(car_profile)
     
-    print("Inside DataLoader mainReturn: ", car_profile)
+    # print("Inside DataLoader mainReturn: ", car_profile)
         
     return car_profile
