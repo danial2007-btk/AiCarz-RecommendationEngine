@@ -3,19 +3,17 @@ import pymongo
 import time
 import logging
 import random
+from fastapi.responses import JSONResponse
 from concurrent.futures import ThreadPoolExecutor
 
+from AiScore import AIScoreInput
 from mongodb import mongodbConn, carzcollection, carzdb
 
 collection = carzcollection
 
-
-# Correct import for AIScoreInput in app.py
-from AiScore import AIScoreInput
-
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# # Set up logging
+# logging.basicConfig(level=logging.INFO)
+# logger = logging.getLogger(__name__)
 
 
 def dataGather(collection, car_id):
@@ -178,152 +176,106 @@ def load_car_profiles_from_mongodb(user_id, user_coordinates):
     return car_profiles
 
 
-def get_car_profiles_by_user_like(user_id):
-    print("Inside DataLoader get_car_profiles_by_user_like: ")
-
-    query = {"likes.userID": ObjectId(user_id)}
+def get_car_profiles_by_user_like(userId):
     
-    projection = {
-        "make": 1,
-        "fuelType": 1,
-        "bodyType": 1,
-        "engineSizeInLiter": 1,
-        "gearbox": 1,
-        "price": 1,
-        "lastAiScore": 1,
-    }
-
-    result = collection.find(query, projection)
-
-    # Extract car profiles from MongoDB query results
-    car_profiles = []
-
-    for item in result:
-        car_id = str(item.get("_id", ""))
-        make = item.get("make", "")
-        gearbox = item.get("gearbox", "")
-        price = item.get("price", 0.0)
-        fuel_type = item.get("fuelType", "")
-        engine_size_in_liter = item.get("engineSizeInLiter", 0.0)
-        ai_score = item.get("lastAiScore", 0.0)
-
-        car_profile = {
-            "id": car_id,
-            "make": make,
-            "gearbox": gearbox,
-            "price": price,
-            "fuel_type": fuel_type,
-            "engine_size_in_liter": engine_size_in_liter,
-            "ai_score": ai_score,
+    try:
+        car_profiles = [] 
+    
+        # Specify the fields to retrieve
+        fields_to_retrieve = {
+            "make": 1,
+            "fuelType": 1,
+            "bodyType": 1,
+            "engineSizeInLiter": 1,
+            "gearbox": 1,
+            "price": 1,
+            "lastAiScore": 1
         }
 
-        car_profiles.append(car_profile)
-        print("Inside the car profile", car_profiles)
+        # Specify the userId for filtering
+        user_id_to_find = ObjectId(userId)
 
-    return car_profiles
+        # Query to find documents based on userId and retrieve specified fields
+        query = {"likes": user_id_to_find}
+        result = collection.find(query, fields_to_retrieve)
+        
+        # Extract car profiles from MongoDB query results
+        for item in result:
+            car_id = str(item.get("_id", ""))
+            make = item.get("make", "")
+            fuel_type = item.get("fuelType", "")
+            gearbox = item.get("gearbox", "")
+            engine_size_in_liter = item.get("engineSizeInLiter", 0.0)
+            price = item.get("price", 0.0)
+            ai_score = item.get("lastAiScore", 0.0)
 
+            car_profile = {
+                "id": car_id,
+                "make": make,
+                "gearbox": gearbox,
+                "price": price,
+                "fuel_type": fuel_type,
+                "engine_size_in_liter": engine_size_in_liter,
+                "ai_score": ai_score,
+            }
 
-# def get_car_profiles_by_user_like(user_id):
-#     print("Inside DataLoader get_car_profiles_by_user_like: ")
-
-#     pipeline = [
-#         {
-#             "$match": {
-#                 "likedByUser": {"$in": [ObjectId(user_id)]},
-#             },
-#         },
-#         {
-#             "$project": {
-#                 "make": 1,
-#                 "fuelType": 1,
-#                 "bodyType": 1,
-#                 "engineSizeInLiter": 1,
-#                 "gearbox": 1,
-#                 "price": 1,
-#                 "lastAiScore": 1,
-#             },
-#         },
-#     ]
-
-#     # Execute the pipeline
-#     result = collection.aggregate(pipeline)
-
-#     # Extract car profiles from MongoDB query results
-#     car_profiles = []
-
-#     for item in result:
-#         car_id = str(item.get("_id", ""))
-#         make = item.get("make", "")
-#         gearbox = item.get("gearbox", "")
-#         price = item.get("price", 0.0)
-#         fuel_type = item.get("fuelType", "")
-#         engine_size_in_liter = item.get("engineSizeInLiter", 0.0)
-#         ai_score = item.get("lastAiScore", 0.0)
-
-#         car_profile = {
-#             "id": car_id,
-#             "make": make,
-#             "gearbox": gearbox,
-#             "price": price,
-#             "fuel_type": fuel_type,
-#             "engine_size_in_liter": engine_size_in_liter,
-#             "ai_score": ai_score,
-#         }
-
-#         car_profiles.append(car_profile)
-#         print("Inside the car profile", car_profiles)
-
-#     return car_profiles
-
-
-def get_car_profiles_by_user_dislike(user_id):
-    pipeline = [
-        {
-            "$match": {
-                "dislikes": user_id,
-            },
-        },
-        {
-            "$project": {
-                "make": 1,
-                "fuelType": 1,
-                "bodyType": 1,
-                "engineSizeInLiter": 1,
-                "gearbox": 1,
-                "price": 1,
-                "lastAiScore": 1,
-            },
-        },
-    ]
-
-    # Execute the pipeline
-    result = collection.aggregate(pipeline)
-
-    # Extract car profiles from MongoDB query results
-    car_profiles = []
-
-    for item in result:
-        car_id = str(item.get("_id", ""))
-        make = item.get("make", "")
-        gearbox = item.get("gearbox", "")
-        price = item.get("price", 0.0)
-        fuel_type = item.get("fuelType", "")
-        engine_size_in_liter = item.get("engineSizeInLiter", 0.0)
-        ai_score = item.get("lastAiScore", 0.0)
-
-        car_profile = {
-            "id": car_id,
-            "make": make,
-            "gearbox": gearbox,
-            "price": price,
-            "fuel_type": fuel_type,
-            "engine_size_in_liter": engine_size_in_liter,
-            "ai_score": ai_score,
+            car_profiles.append(car_profile)
+            
+        return car_profiles
+        
+    except Exception as e:
+        print("Error in get_car_profiles_by_user_like function: ", e)
+    
+    
+def get_car_profiles_by_user_dislike(userId):
+    
+    try:
+        car_profiles = [] 
+    
+        # Specify the fields to retrieve
+        fields_to_retrieve = {
+            "make": 1,
+            "fuelType": 1,
+            "bodyType": 1,
+            "engineSizeInLiter": 1,
+            "gearbox": 1,
+            "price": 1,
+            "lastAiScore": 1
         }
 
-        car_profiles.append(car_profile)
+        # Specify the userId for filtering
+        user_id_to_find = ObjectId(userId)
 
-    return car_profiles
+        # Query to find documents based on userId and retrieve specified fields
+        query = {"dislikes": user_id_to_find}
+        result = collection.find(query, fields_to_retrieve)
+        
+        # Extract car profiles from MongoDB query results
+        for item in result:
+            car_id = str(item.get("_id", ""))
+            make = item.get("make", "")
+            fuel_type = item.get("fuelType", "")
+            gearbox = item.get("gearbox", "")
+            engine_size_in_liter = item.get("engineSizeInLiter", 0.0)
+            price = item.get("price", 0.0)
+            ai_score = item.get("lastAiScore", 0.0)
+
+            car_profile = {
+                "id": car_id,
+                "make": make,
+                "gearbox": gearbox,
+                "price": price,
+                "fuel_type": fuel_type,
+                "engine_size_in_liter": engine_size_in_liter,
+                "ai_score": ai_score,
+            }
+
+            car_profiles.append(car_profile)
+            
+        return car_profiles
+        
+    except Exception as e:
+        print("Error in get_car_profiles_by_user_like function: ", e)
 
 
 def load_likes_interaction(userId):
@@ -416,33 +368,33 @@ def mainReturn(carIds):
     return car_profile
 
 
-def getData(user_id, coordinates):
-    # User ID
-    user_id = user_id
-    # User coordinates
-    coordinates = coordinates
-    print("inside the getData function")
+# def getData(user_id, coordinates):
+#     # User ID
+#     user_id = user_id
+#     # User coordinates
+#     coordinates = coordinates
+#     print("inside the getData function")
 
-    try:
-        startTime = time.time()
+#     try:
+#         startTime = time.time()
 
-        # Use ThreadPoolExecutor for parallel execution
-        with ThreadPoolExecutor(max_workers=3) as executor:
-            future_load = executor.submit(
-                load_car_profiles_from_mongodb, user_id, coordinates
-            )
-            future_like = executor.submit(get_car_profiles_by_user_like, user_id)
-            future_dislike = executor.submit(get_car_profiles_by_user_dislike, user_id)
+#         # Use ThreadPoolExecutor for parallel execution
+#         with ThreadPoolExecutor(max_workers=3) as executor:
+#             future_load = executor.submit(
+#                 load_car_profiles_from_mongodb, user_id, coordinates
+#             )
+#             future_like = executor.submit(get_car_profiles_by_user_like, user_id)
+#             future_dislike = executor.submit(get_car_profiles_by_user_dislike, user_id)
 
-        # Retrieve results from the futures
-        car_profiles_load = future_load.result()
-        car_profiles_like = future_like.result()
-        car_profiles_dislike = future_dislike.result()
+#         # Retrieve results from the futures
+#         car_profiles_load = future_load.result()
+#         car_profiles_like = future_like.result()
+#         car_profiles_dislike = future_dislike.result()
 
-        endTime = time.time()
-        print("Took: ", endTime - startTime)
+#         endTime = time.time()
+#         print("Took: ", endTime - startTime)
 
-    except Exception as e:
-        print("Error in getData function: ", e)
+#     except Exception as e:
+#         print("Error in getData function: ", e)
 
-    return car_profiles_load, car_profiles_like, car_profiles_dislike
+#     return car_profiles_load, car_profiles_like, car_profiles_dislike
