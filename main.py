@@ -46,7 +46,6 @@ def AiScoreMain(car_id):
 
 
 # The below work is a structure of Main function where the feed manager will be called and the recommendations will be generated
-# from dataLoader import load_car_profiles_from_mongodb,mainReturn, load_user_likes, load_likes_interaction, load_user_dislikes, load_dislikes_interaction
 from modelLike import (
     get_top_recommendations,
     calculate_cosine_similarity,
@@ -68,15 +67,16 @@ from modelDislike import (
 )
 
 from dataLoader import (
-    # getData,
     get_car_profiles_by_user_like,
     get_car_profiles_by_user_dislike,
-    load_car_profiles_from_mongodb
+    load_car_profiles_from_mongodb,
+    load_likes_interaction,
+    load_dislikes_interaction,
 )
 
 
 def likeCarId(user_car_data_interaction, user_car_profiles, car_profiles):
-    # Example usage likes recommadation
+    
     # user_car_data_interaction = load_likes_interaction(user_id)
     # user_car_profiles = load_user_likes(user_id)
     # car_profiles = load_car_profiles_from_mongodb(user_id,coordinates)
@@ -147,18 +147,21 @@ def FeedManagerMain(user_id, coordinates):
     # User coordinates
     coordinates = coordinates
 
-    # likeCarId = get_car_profiles_by_user_dislike(user_id)
-
-    # car_profiles_load, car_profiles_like, car_profiles_dislike = getData(user_id, coordinates)
+    # load Car Objects from the MongoDB
     carData = load_car_profiles_from_mongodb(user_id, coordinates)
+    
+    #Load User Like History
     userLike = get_car_profiles_by_user_like(user_id)
+    userInteraction_like = load_likes_interaction(user_id,userLike)
+    
+    #Load User Dislike History
     userDislike = get_car_profiles_by_user_like(user_id)
-
-    # print("car_profiles_load",car_profiles_load)
-    # print("car_profiles_like",car_profiles_like)
-    # print("car_profiles_dislike",car_profiles_dislike)
-
-    return carData, userLike, userDislike
+    userInteraction_dislike = load_dislikes_interaction(user_id,userDislike)
+    
+    likeRecommended = likeCarId(userInteraction_like, userLike, carData)
+    
+    
+    # return userInteraction_dislike
 
     # # Use ThreadPoolExecutor for parallel execution
     # with concurrent.futures.ThreadPoolExecutor() as executor:

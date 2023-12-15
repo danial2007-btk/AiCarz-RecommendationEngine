@@ -278,33 +278,40 @@ def get_car_profiles_by_user_dislike(userId):
         print("Error in get_car_profiles_by_user_like function: ", e)
 
 
-def load_likes_interaction(userId):
+def load_likes_interaction(userId,userLike):
     # Load user likes interaction data for further processing
-    user_likes_data = load_user_likes(userId)
-    user_car_data = []
+    try:
+        user_like_interaction = []
+        
+        like_id = userLike
+        for car in like_id:
+            L_id = car['id']
+            user_like_interaction.append({"user_id": userId, "carId": L_id, "interaction": 1})
 
-    like_id = user_likes_data["likes"]
-    for car in like_id:
-        L_id = car["id"]
-        user_car_data.append({"user_id": userId, "id": _id, "interaction": 1})
+        print("user_like_interaction",user_like_interaction)
+        return user_like_interaction
+    
+    except Exception as e:
+        print("Error in load_likes_interaction function: ", e)
 
-    return user_car_data
+def load_dislikes_interaction(userId,userDisLike):
+    try:
+        user_like_interaction = []
+        
+        like_id = userDisLike
+        for car in like_id:
+            L_id = car['id']
+            user_like_interaction.append({"user_id": userId, "carId": L_id, "interaction": 0})
 
-
-def load_dislikes_interaction(userId):
-    # Load user dislikes interaction data for further processing
-    user_dislikes_data = load_user_dislikes(userId)
-    user_car_data = []
-
-    dislike_id = user_dislikes_data["dislikes"]
-    for car in dislike_id:
-        D_id = car["id"]
-        user_car_data.append({"user_id": userId, "id": D_id, "interaction": 0})
-
-    return user_car_data
+        print("user_like_interaction",user_like_interaction)
+        return user_like_interaction
+    
+    except Exception as e:
+        print("Error in load_likes_interaction function: ", e)
 
 
 def mainReturn(carIds):
+    
     carid = carIds
     result = collection.find({"_id": ObjectId(carid)})
 
