@@ -108,15 +108,19 @@ def FeedManagerMain(user_id, coordinates):
             carIDs = carIDs[:25]    
                     
             print("Length of CarIDs",len(carIDs))
+    
             
         else:
+            startTime = time.time()
             carIDs = aiScore_carIDs(carData)
+            endTime = time.time()
+            print("Time for getting carsID:", endTime - startTime)
             
-        carGets = []
+            
+              
         startTime = time.time()
-        
-        for ids in carIDs:
-            carGets.append(mainReturn(ids))
+        # Populating the CAR Objects
+        carGets = mainReturn(carIDs)
 
         endTime = time.time()
         print("Time Taken:", endTime - startTime)
@@ -125,3 +129,5 @@ def FeedManagerMain(user_id, coordinates):
 
     except Exception as e:
         print("Exception in Main Function:", e)
+        
+        

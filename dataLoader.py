@@ -302,13 +302,19 @@ def load_dislikes_interaction(userId, userDisLike):
 
 def mainReturn(carIds):
     try:
-        carid = carIds
-        result = collection.find({"_id": ObjectId(carid)})
 
-        data = list(result)
         car_profiles = []
+        
+        object_ids = [ObjectId(carIds) for carIds in carIds]
 
-        for item in data:
+        # Query to retrieve car data based on IDs
+        query = {"_id": {"$in": object_ids}}
+
+        # Fetch the data
+        result = list(collection.find(query))
+        # print(result)
+
+        for item in result:
             car_id = str(item.get('_id', ''))
             make = item.get('make', None)
             fuelType = item.get('fuelType', None)
@@ -327,6 +333,7 @@ def mainReturn(carIds):
             description = item.get('description', None)
             cityName = item.get('cityName', None)
             fuelConsumptionInMPG = item.get('fuelConsumptionInMPG', None)
+            
             # Check for the existence of the 'location' field
             location_data = item.get('location')
             coordinates = location_data.get('coordinates', None) if location_data else None
@@ -362,7 +369,7 @@ def mainReturn(carIds):
 
             car_profiles.append(car_profile)
             
-        return car_profile
+        return car_profiles
 
     except Exception as e:
         print("Error in mainReturn function: ", e)
