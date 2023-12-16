@@ -46,25 +46,10 @@ def AiScoreMain(car_id):
 
 
 # The below work is a structure of Main function where the feed manager will be called and the recommendations will be generated
-from modelLike import (
-    get_top_recommendations,
-    calculate_cosine_similarity,
-    preprocess_car_profiles,
-    preprocess_user_car_profiles,
-    train_collaborative_filtering_model,
-    load_user_car_data,
-)
+
+from model import get_top_n_recommendations
 
 from feedManager import feedCarId
-
-from modelDislike import (
-    get_top_recommendations1,
-    calculate_cosine_similarity1,
-    preprocess_car_profiles1,
-    preprocess_user_car_profiles1,
-    train_collaborative_filtering_model1,
-    load_user_car_data1,
-)
 
 from dataLoader import (
     get_car_profiles_by_user_like,
@@ -72,73 +57,8 @@ from dataLoader import (
     load_car_profiles_from_mongodb,
     load_likes_interaction,
     load_dislikes_interaction,
+    mainReturn
 )
-
-
-def likeCarId(user_car_data_interaction, user_car_profiles, car_profiles):
-    
-    # user_car_data_interaction = load_likes_interaction(user_id)
-    # user_car_profiles = load_user_likes(user_id)
-    # car_profiles = load_car_profiles_from_mongodb(user_id,coordinates)
-
-    numerical_features = ["price", "engineSizeInLiter"]
-    categorical_features = ["make", "gearbox", "fueltype"]
-
-    trainset = load_user_car_data(user_car_data_interaction)
-
-    user_car_profiles = preprocess_user_car_profiles(
-        user_car_profiles, numerical_features, categorical_features
-    )
-    car_profiles = preprocess_car_profiles(
-        car_profiles, numerical_features, categorical_features
-    )
-
-    user_numerical_features = user_car_profiles[numerical_features].values
-    car_numerical_features = car_profiles[numerical_features].values
-
-    cosine_sim = calculate_cosine_similarity(
-        user_numerical_features, car_numerical_features
-    )
-    recommendations = get_top_recommendations(cosine_sim, car_profiles)
-
-    recommendation_likes_car_ids = recommendations["Car_ID"].tolist()
-
-    recommendation_likes_car_ids = recommendation_likes_car_ids[:7]
-
-    return recommendation_likes_car_ids
-
-
-def dislikeCarId(user_id, coordinates):
-    user_car_data_interaction = load_dislikes_interaction(user_id)
-    user_car_profiles = load_user_dislikes(user_id)
-    car_profiles = load_car_profiles_from_mongodb(user_id, coordinates)
-
-    numerical_features = ["price", "engineSizeInLiter"]
-    categorical_features = ["make", "gearbox", "fueltype"]
-
-    trainset = load_user_car_data1(user_car_data_interaction)
-
-    user_car_profiles = preprocess_user_car_profiles1(
-        user_car_profiles, numerical_features, categorical_features
-    )
-    car_profiles = preprocess_car_profiles1(
-        car_profiles, numerical_features, categorical_features
-    )
-
-    user_numerical_features = user_car_profiles[numerical_features].values
-    car_numerical_features = car_profiles[numerical_features].values
-
-    cosine_sim = calculate_cosine_similarity1(
-        user_numerical_features, car_numerical_features
-    )
-    recommendations = get_top_recommendations1(cosine_sim, car_profiles)
-
-    recommendation_dislikes_car_ids = recommendations["Car_ID"].tolist()
-
-    recommendation_dislikes_car_ids = recommendation_dislikes_car_ids[:7]
-
-    return recommendation_dislikes_car_ids
-
 
 def FeedManagerMain(user_id, coordinates):
     # User ID
@@ -147,43 +67,49 @@ def FeedManagerMain(user_id, coordinates):
     # User coordinates
     coordinates = coordinates
 
-    # load Car Objects from the MongoDB
-    carData = load_car_profiles_from_mongodb(user_id, coordinates)
-    
-    #Load User Like History
-    userLike = get_car_profiles_by_user_like(user_id)
-    userInteraction_like = load_likes_interaction(user_id,userLike)
-    
-    #Load User Dislike History
-    userDislike = get_car_profiles_by_user_like(user_id)
-    userInteraction_dislike = load_dislikes_interaction(user_id,userDislike)
-    
-    likeRecommended = likeCarId(userInteraction_like, userLike, carData)
-    
-    
-    # return userInteraction_dislike
+    try:
+        # load Car Objects from the MongoDB
+        carData = load_car_profiles_from_mongodb(user_id, coordinates)
+        
+        # Get the AI Score and Random Cars
+        feedCar = feedCarId(carData)
+        print("len of FeedCar",len(feedCar))
 
-    # # Use ThreadPoolExecutor for parallel execution
-    # with concurrent.futures.ThreadPoolExecutor() as executor:
-    #     # Submit the functions for parallel execution
-    #     future_recommended = executor.submit(feedCarId, car_profiles_load)
-    #     future_like = executor.submit(likeCarId, car_profiles_like)
-    #     future_dislike = executor.submit(dislikeCarId, car_profiles_dislike)
+        # Load User Like History
+        userLike = get_car_profiles_by_user_like(user_id)        
+        userInteraction_like = load_likes_interaction(user_id, userLike)
 
-    #     # Wait for all functions to complete
-    #     concurrent.futures.wait([future_recommended, future_like, future_dislike])
+        # Get Like Recommendation
+        likeRecommended = get_top_n_recommendations(user_id, carData, userLike, userInteraction_like)
+        print("len of LikeRecommended",len(likeRecommended))
+        
+        #Load User Dislike History
+        userDislike = get_car_profiles_by_user_like(user_id)        
+        userInteraction_dislike = load_dislikes_interaction(user_id,userDislike)
 
-    #     # Get the results
-    #     recommended_car_pairs = future_recommended.result()
-    #     likecarid = future_like.result()
-    #     dislikecarid = future_dislike.result()
+        # Get DisLike Recommendation
+        dislikeRecommended = get_top_n_recommendations(user_id, carData, userDislike, userInteraction_dislike)
+        print("len of DislikeRecommended",len(dislikeRecommended))
+        #Checking that all the car IDs are Unique
+        
+        carIDs = set(likeRecommended + dislikeRecommended + feedCar)
+        carIDs = list(carIDs)
+        carIDs = carIDs[:25]            
+        print("Length of CarIDs",len(carIDs))
+                 
+        # if len(carIDs) < 25:
+        #     carIDs = feedCar
+            
+        carGets = []
+        startTime = time.time()
+        
+        for ids in carIDs:
+            carGets.append(mainReturn(ids))
 
-    # final_recommendation = recommended_car_pairs + likecarid + dislikecarid
-    # # return final_recommation
+        endTime = time.time()
+        print("Time Taken:", endTime - startTime)
+        
+        return carGets
 
-    # carGets = []
-
-    # for ids in final_recommendation:
-    #     carGets.append(mainReturn(ids))
-
-    # return carGets
+    except Exception as e:
+        print("Exception in Main Function:", e)

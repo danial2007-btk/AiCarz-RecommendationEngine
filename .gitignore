@@ -6,4 +6,8 @@
 
 testFeedManage.py
 testDataloader.py
+testmodel.py
+modelLike.py
+modelDislike.py
+
 /__pycache__
