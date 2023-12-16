@@ -72,5 +72,5 @@ async def feed_manager(
 
     except Exception as e:
         # Handle exceptions, log them, and return an appropriate response
-        raise HTTPException(status_code=500, detail="Internal Server Error::") from e
+        raise HTTPException(status_code=500, detail=e)
     

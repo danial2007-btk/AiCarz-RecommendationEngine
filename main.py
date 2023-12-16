@@ -49,7 +49,7 @@ def AiScoreMain(car_id):
 
 from model import get_top_n_recommendations
 
-from feedManager import feedCarId
+from feedManager import feedCarId, aiScore_carIDs
 
 from dataLoader import (
     get_car_profiles_by_user_like,
@@ -61,44 +61,56 @@ from dataLoader import (
 )
 
 def FeedManagerMain(user_id, coordinates):
+    
     # User ID
     user_id = user_id
 
     # User coordinates
     coordinates = coordinates
 
+    carIDs = []
+    
     try:
         # load Car Objects from the MongoDB
         carData = load_car_profiles_from_mongodb(user_id, coordinates)
-        
-        # Get the AI Score and Random Cars
-        feedCar = feedCarId(carData)
-        print("len of FeedCar",len(feedCar))
 
         # Load User Like History
-        userLike = get_car_profiles_by_user_like(user_id)        
-        userInteraction_like = load_likes_interaction(user_id, userLike)
-
-        # Get Like Recommendation
-        likeRecommended = get_top_n_recommendations(user_id, carData, userLike, userInteraction_like)
-        print("len of LikeRecommended",len(likeRecommended))
-        
+        userLike = get_car_profiles_by_user_like(user_id)   
+        print("UserLike",userLike)
+             
+            
         #Load User Dislike History
-        userDislike = get_car_profiles_by_user_like(user_id)        
-        userInteraction_dislike = load_dislikes_interaction(user_id,userDislike)
-
-        # Get DisLike Recommendation
-        dislikeRecommended = get_top_n_recommendations(user_id, carData, userDislike, userInteraction_dislike)
-        print("len of DislikeRecommended",len(dislikeRecommended))
-        #Checking that all the car IDs are Unique
+        userDislike = get_car_profiles_by_user_like(user_id)   
+        print("UserDislike",userDislike)     
         
-        carIDs = set(likeRecommended + dislikeRecommended + feedCar)
-        carIDs = list(carIDs)
-        carIDs = carIDs[:25]            
-        print("Length of CarIDs",len(carIDs))
-                 
-        # if len(carIDs) < 25:
-        #     carIDs = feedCar
+        if userLike and userDislike:
+            
+            #Load User Interaction History
+            userInteraction_like = load_likes_interaction(user_id, userLike)
+            userInteraction_dislike = load_dislikes_interaction(user_id,userDislike)
+            
+            # Get the AI Score and Random Cars
+            feedCar = feedCarId(carData)
+            print("len of FeedCar",len(feedCar))
+            
+            # Get Like Recommendation
+            likeRecommended = get_top_n_recommendations(user_id, carData, userLike, userInteraction_like)
+            print("len of LikeRecommended",len(likeRecommended))
+
+            # Get DisLike Recommendation
+            dislikeRecommended = get_top_n_recommendations(user_id, carData, userDislike, userInteraction_dislike)
+            print("len of DislikeRecommended",len(dislikeRecommended))
+        
+            #Checking that all the car IDs are Unique
+            
+            carIDs = set(likeRecommended + dislikeRecommended + feedCar)
+            carIDs = list(carIDs)
+            carIDs = carIDs[:25]    
+                    
+            print("Length of CarIDs",len(carIDs))
+            
+        else:
+            carIDs = aiScore_carIDs(carData)
             
         carGets = []
         startTime = time.time()
