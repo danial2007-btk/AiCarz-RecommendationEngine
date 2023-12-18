@@ -2,7 +2,7 @@ from bson import ObjectId
 import concurrent.futures
 import time
 
-from memory_profiler import profile
+# from memory_profiler import profile
 
 from mongodb import mongodbConn, carzcollection, carzdb
 
