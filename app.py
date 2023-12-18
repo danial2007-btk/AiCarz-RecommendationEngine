@@ -62,15 +62,6 @@ async def calculate_ai_score(
             detail="Invalid car_id. Must be a valid MongoDB ObjectId.",
         )
         
-# =================== Checking if Car ID is in Database or not ==================
-    
-    # Check if car_id exists in the database
-    if not carzcollection.find_one({"_id": ObjectId(car_data.carid)}):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Car Id not found in database.",
-        )
-    
 # ======================= Ai Score Calculation =======================
 
     try:
