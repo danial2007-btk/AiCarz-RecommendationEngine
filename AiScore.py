@@ -34,6 +34,6 @@ class AIScoreCalculator:
             aiscore_input.total_ad_displays
         )
 
-        calculate_score = (self.weight1 * score1) - (self.weight2 * score2) + self.weight3 *(score3 * score4)
+        calculate_score = (self.weight1 * score1) - (self.weight2 * score2) + self.weight3 *(score3 *  score4)
         ai_score = aiscore_input.last_ai_score + calculate_score / 2
         return ai_score

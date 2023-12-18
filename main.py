@@ -1,15 +1,25 @@
 from bson import ObjectId
 import concurrent.futures
 import time
+
+from memory_profiler import profile
+
 from mongodb import mongodbConn, carzcollection, carzdb
 
 # Calling Function form the Files
 from AiScore import AIScoreInput, AIScoreCalculator
 from dataLoader import dataGather
 
+# The below work is a structure of Main function where the feed manager will be called and the recommendations will be generated
+
+from model import get_top_n_recommendations
+from feedManager import feedCarId, aiScore_carIDs
+from dataLoader import get_car_profiles_by_user_like,get_car_profiles_by_user_dislike,load_car_profiles_from_mongodb,load_likes_interaction,load_dislikes_interaction,mainReturn
+
+
 collection = carzcollection
 
-
+# @profile
 def AiScoreMain(car_id):
     carId = car_id
 
@@ -29,37 +39,27 @@ def AiScoreMain(car_id):
     filter_criteria = {"_id": ObjectId(carId)}
 
     if getAiScore is not None:
-        # Specify the update operation (in this case, using $push to update the AiScore field)
-        update_operation = {"$push": {"AiScore": getAiScore}}
+        try:
+            # Specify the update operation (in this case, using $push to update the AiScore field)
+            update_operation = {"$push": {"AiScore": getAiScore}}
 
-        # Perform the update
-        result = carzcollection.update_one(filter_criteria, update_operation)
+            # Perform the update
+            result = carzcollection.update_one(filter_criteria, update_operation)
 
-        # Check if the update was successful
-        if result.modified_count > 0:
-            return "Update successful"
-        else:
-            return "No matching document found"
+            # Check if the update was successful
+            if result.modified_count > 0:
+                return "Update successful"
+            else:
+                return "No matching document found"
+            
+        except Exception as e:
+            print("Exception in AiScoreMain Function:", e)
 
     else:
         return "CarId not found / AiScore not found"
 
 
-# The below work is a structure of Main function where the feed manager will be called and the recommendations will be generated
-
-from model import get_top_n_recommendations
-
-from feedManager import feedCarId, aiScore_carIDs
-
-from dataLoader import (
-    get_car_profiles_by_user_like,
-    get_car_profiles_by_user_dislike,
-    load_car_profiles_from_mongodb,
-    load_likes_interaction,
-    load_dislikes_interaction,
-    mainReturn
-)
-
+# @profile
 def FeedManagerMain(user_id, coordinates):
     
     # User ID
@@ -76,12 +76,12 @@ def FeedManagerMain(user_id, coordinates):
 
         # Load User Like History
         userLike = get_car_profiles_by_user_like(user_id)   
-        print("UserLike",userLike)
+        # print("UserLike",userLike)
              
             
         #Load User Dislike History
-        userDislike = get_car_profiles_by_user_like(user_id)   
-        print("UserDislike",userDislike)     
+        userDislike = get_car_profiles_by_user_dislike(user_id)   
+        # print("UserDislike",userDislike)     
         
         if userLike and userDislike:
             
@@ -91,15 +91,17 @@ def FeedManagerMain(user_id, coordinates):
             
             # Get the AI Score and Random Cars
             feedCar = feedCarId(carData)
-            print("len of FeedCar",len(feedCar))
+            feedCar = feedCar[:10]
+            # print("len of FeedCar",len(feedCar))
             
             # Get Like Recommendation
             likeRecommended = get_top_n_recommendations(user_id, carData, userLike, userInteraction_like)
-            print("len of LikeRecommended",len(likeRecommended))
+            # print("len of LikeRecommended",len(likeRecommended))
 
             # Get DisLike Recommendation
             dislikeRecommended = get_top_n_recommendations(user_id, carData, userDislike, userInteraction_dislike)
-            print("len of DislikeRecommended",len(dislikeRecommended))
+            dislikeRecommended = dislikeRecommended[:10]
+            # print("len of DislikeRecommended",len(dislikeRecommended))
         
             #Checking that all the car IDs are Unique
             
@@ -107,12 +109,13 @@ def FeedManagerMain(user_id, coordinates):
             carIDs = list(carIDs)
             carIDs = carIDs[:25]    
                     
-            print("Length of CarIDs",len(carIDs))
+            # print("Length of CarIDs",len(carIDs))
     
             
         else:
             startTime = time.time()
             carIDs = aiScore_carIDs(carData)
+            # print("len of CarIDs in else condition:::",len(carIDs))
             endTime = time.time()
             print("Time for getting carsID:", endTime - startTime)
             
@@ -129,5 +132,6 @@ def FeedManagerMain(user_id, coordinates):
 
     except Exception as e:
         print("Exception in Main Function:", e)
+        
         
         

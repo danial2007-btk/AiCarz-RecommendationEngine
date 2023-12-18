@@ -7,3 +7,7 @@ mongodbConn = MongoClient(connection_string)
 carzdb = mongodbConn["aicarsdb"]
 carzcollection = carzdb["cars"]
 print("mongodb connected")
+
+
+userdb = mongodbConn["aicarsdb"]
+usercollection = userdb["users"]

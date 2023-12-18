@@ -65,7 +65,7 @@ def get_top_n_recommendations(user_id, car_data, user_preference_data, user_inte
         hybrid_predictions = [0.7 * cf_pred + 0.3 * content_pred for cf_pred, content_pred in zip(predictions, content_predictions)]
 
         # Get indices of top N recommendations
-        top_indices = sorted(range(len(hybrid_predictions)), key=lambda i: hybrid_predictions[i], reverse=True)[:10]
+        top_indices = sorted(range(len(hybrid_predictions)), key=lambda i: hybrid_predictions[i], reverse=True)[:15]
 
         # Get the corresponding car IDs
         top_car_ids = [car_ids_to_recommend[i] for i in top_indices]
@@ -77,5 +77,3 @@ def get_top_n_recommendations(user_id, car_data, user_preference_data, user_inte
     
     except Exception as e:
         print("Exception in Recommendation Function:", e)
-# recommendations = get_top_n_recommendations(user_id_to_recommend, car_data, user_preference_data, user_interaction_data)
-# print(recommendations)

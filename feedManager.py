@@ -5,57 +5,67 @@ def extract_car_ids_by_ai_score_range(car_profiles):
     ai_score_ranges = [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5)]
     unique_car_ids = set()
 
-    for score_range in ai_score_ranges:
-        range_car_ids = set()
-        for profile in car_profiles:
-            ai_scores = profile.get('AiScore', [2.5])
-
-            if isinstance(ai_scores, list):
-                ai_score = ai_scores[-1]  # Get the last AiScore if it is a list
-            else:
-                ai_score = ai_scores  # Use the single AiScore value if it is not a list
-
-            if score_range[0] <= ai_score < score_range[1]:
-                range_car_ids.add(profile['carid'])
+    try:
         
-        # If there are fewer than 2 car IDs in the range, add from the default range
-        while len(range_car_ids) < 1:
+        for score_range in ai_score_ranges:
+            range_car_ids = set()
             for profile in car_profiles:
                 ai_scores = profile.get('AiScore', [2.5])
 
                 if isinstance(ai_scores, list):
-                    ai_score = ai_scores[-1]
+                    ai_score = ai_scores[-1]  # Get the last AiScore if it is a list
                 else:
-                    ai_score = ai_scores
+                    ai_score = ai_scores  # Use the single AiScore value if it is not a list
 
-                if 2.5 <= ai_score < 2.6 and profile['carid'] not in range_car_ids:
+                if score_range[0] <= ai_score < score_range[1]:
                     range_car_ids.add(profile['carid'])
-                    break
-        
-        unique_car_ids.update(range_car_ids)  # Add the car IDs from the range to the set
+            
+            # If there are fewer than 2 car IDs in the range, add from the default range
+            while len(range_car_ids) < 1:
+                for profile in car_profiles:
+                    ai_scores = profile.get('AiScore', [2.5])
 
-    return unique_car_ids
+                    if isinstance(ai_scores, list):
+                        ai_score = ai_scores[-1]
+                    else:
+                        ai_score = ai_scores
+
+                    if 2.5 <= ai_score < 2.6 and profile['carid'] not in range_car_ids:
+                        range_car_ids.add(profile['carid'])
+                        break
+            
+            unique_car_ids.update(range_car_ids)  # Add the car IDs from the range to the set
+
+        return unique_car_ids
+    except Exception as e:
+        print("Exception in extract_car_ids_by_ai_score_range Function:", e)
 
 def get_random_car_ids(car_profiles, num_cars=15):
-    all_car_ids = [profile['carid'] for profile in car_profiles]
-    random_car_ids = set(random.sample(all_car_ids, min(num_cars, len(all_car_ids))))
-    return random_car_ids
+    try:        
+        all_car_ids = [profile['carid'] for profile in car_profiles]
+        random_car_ids = set(random.sample(all_car_ids, min(num_cars, len(all_car_ids))))
+        return random_car_ids
+    except Exception as e:
+        print("Exception in get_random_car_ids Function:", e)
 
 def feedCarId(car_profiles):
+    try:
+        # Extract unique car IDs by AI score range
+        unique_car_ids_by_ai_score_range = extract_car_ids_by_ai_score_range(car_profiles)
 
-    # Extract unique car IDs by AI score range
-    unique_car_ids_by_ai_score_range = extract_car_ids_by_ai_score_range(car_profiles)
+        # Get unique 10 random car IDs
+        unique_random_car_ids = get_random_car_ids(car_profiles, num_cars=15)
 
-    # Get unique 10 random car IDs
-    unique_random_car_ids = get_random_car_ids(car_profiles, num_cars=15)
+        # Combine unique car IDs from both sources
+        final_unique_car_ids = list(unique_car_ids_by_ai_score_range.union(unique_random_car_ids))
 
-    # Combine unique car IDs from both sources
-    final_unique_car_ids = list(unique_car_ids_by_ai_score_range.union(unique_random_car_ids))
-
-    # Ensure the final list has exactly 20 unique car IDs
-    final_unique_car_ids = final_unique_car_ids[:15]
+        # Ensure the final list has exactly 20 unique car IDs
+        final_unique_car_ids = final_unique_car_ids[:15]
+        
+        return final_unique_car_ids
     
-    return final_unique_car_ids
+    except Exception as e:
+        print("Exception in feedCarId Function:", e)
 
 def aiScore_carIDs(car_profiles):
     

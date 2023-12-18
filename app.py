@@ -1,9 +1,12 @@
-from fastapi import FastAPI, HTTPException, Depends, Query
+from fastapi import FastAPI, HTTPException, Depends, Query, status
+from contextlib import asynccontextmanager
 from pydantic import BaseModel
+from bson import ObjectId
 
 from main import AiScoreMain,FeedManagerMain
-from mongodb import mongodbConn, carzcollection, carzdb
-from contextlib import asynccontextmanager
+from mongodb import mongodbConn, carzcollection, usercollection
+
+# from memory_profiler import profile
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -28,15 +31,48 @@ def check_api_key(api_key: str = Query(..., description="API Key")):
         raise HTTPException(status_code=401, detail="Invalid API key")
     return api_key
 
+
+# **************************       APP CHECKING         **************************
+
+
+@app.get("/")
+def read_root():
+    return {"message": "App is running successfully"}
+
+
+# **************************       AI SCORE API ENDPOINT         **************************
+
 class CarIdInput(BaseModel):
     carid: str  # Car ID as input
 
 # Ai Score API Endpoint
+# @profile
 @app.post("/aiscore")
 async def calculate_ai_score(
     car_data: CarIdInput,
     api_key: str = Depends(check_api_key, use_cache=True),
 ):
+
+# ================== Checking Valid ObjectId for Car ID ==================
+
+    # Check if car_id is a valid MongoDB ObjectId
+    if not ObjectId.is_valid(car_data.carid):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid car_id. Must be a valid MongoDB ObjectId.",
+        )
+        
+# =================== Checking if Car ID is in Database or not ==================
+    
+    # Check if car_id exists in the database
+    if not carzcollection.find_one({"_id": ObjectId(car_data.carid)}):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Car Id not found in database.",
+        )
+    
+# ======================= Ai Score Calculation =======================
+
     try:
         # Function named AiScoreMain that takes a car_id as input
         ai_score = AiScoreMain(car_data.carid)
@@ -45,32 +81,83 @@ async def calculate_ai_score(
     except Exception as e:
         # Handle exceptions, log them, and return an appropriate response
         raise HTTPException(status_code=500, detail="Internal Server Error") from e
-    
-    
+ 
+   
+# **************************       FEED MANAGER API ENDPOINT         **************************
 
 # FeedManager API Endpoint
 class FeedManagerInput(BaseModel):
     user_id: str # User ID as input
-    longitude: float # User latitude as input
-    latitude: float # User longitude as input
-    
+    longitude: float # User longitude: float
+    latitude: float # User latitude: float
+
+# @profile
 @app.post("/feedmanager")
 async def feed_manager(
     feed_data: FeedManagerInput,
     api_key: str = Depends(check_api_key, use_cache=True),
 ):
+    
+    
+# ======================= Checking if UserID is correct Object Id =======================
+    
+    # Check if user_id is a valid MongoDB ObjectId
+    if not ObjectId.is_valid(feed_data.user_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid user_id. Must be a valid MongoDB ObjectId.",
+        )
+        
+# ======================= Checking if UserID is in Database or not =======================
+    
+    # Check if user_id exists in the database
+    if not usercollection.find_one({"_id": ObjectId(feed_data.user_id)}):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User Id not found in database.",
+        )
+        
+
+# ===================== Validating the Longitude and Latitude is empty or not =====================
+    
+    # Validate input data
+    if not feed_data.longitude or not feed_data.latitude:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Longitude and latitude are required fields.",
+        )
+        
+# ===================== Validating the Longitude and Latitude is empty or not =====================
+    
+    # Validate longitude and latitude input data
+    try:
+        longitude = float(feed_data.longitude)
+        latitude = float(feed_data.latitude)
+        
+        # Check if longitude is in the valid range [-180, 180]
+        if not (-180 <= longitude <= 180):
+            raise ValueError("Longitude format is invalid.")
+
+        # Check if latitude is in the valid range [-90, 90]
+        if not (-90 <= latitude <= 90):
+            raise ValueError("Latitude format is invalid.")
+
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid longitude or latitude format.",
+        )
+
     try:
         
-        coordinates = []
-        coordinates.append(feed_data.longitude)
-        coordinates.append(feed_data.latitude)
-        print(coordinates)
-        
+        coordinates = [feed_data.longitude, feed_data.latitude]
+
         # Function named FeedManagerMain that takes a car_id and coordinates as input
-        carIds_ouput = FeedManagerMain(feed_data.user_id, coordinates)        
+        carIds_ouput = FeedManagerMain(feed_data.user_id, coordinates)      
+
         return carIds_ouput
 
     except Exception as e:
         # Handle exceptions, log them, and return an appropriate response
         raise HTTPException(status_code=500, detail=e)
-    
+
