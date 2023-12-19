@@ -91,8 +91,6 @@ def FeedManagerMain(user_id, coordinates):
             
             # Get the AI Score and Random Cars
             feedCar = feedCarId(carData)
-            feedCar = feedCar[:10]
-            # print("len of FeedCar",len(feedCar))
             
             # Get Like Recommendation
             likeRecommended = get_top_n_recommendations(user_id, carData, userLike, userInteraction_like)
@@ -102,13 +100,28 @@ def FeedManagerMain(user_id, coordinates):
             dislikeRecommended = get_top_n_recommendations(user_id, carData, userDislike, userInteraction_dislike)
             dislikeRecommended = dislikeRecommended[:10]
             # print("len of DislikeRecommended",len(dislikeRecommended))
-        
-            #Checking that all the car IDs are Unique
-            
-            carIDs = set(likeRecommended + dislikeRecommended + feedCar)
-            carIDs = list(carIDs)
-            carIDs = carIDs[:25]    
                     
+            # Combine like and dislike recommendations
+            combinedRecommendations = likeRecommended + dislikeRecommended
+
+            # Create a set to track unique carIDs
+            uniqueCarIDs = set()
+
+            # Initialize the final carIDs list
+            carIDs = []
+
+            # Iterate through combinedRecommendations and feedCar in a single loop
+            for carID in combinedRecommendations + feedCar:
+                if carID not in uniqueCarIDs:
+                    carIDs.append(carID)
+                    uniqueCarIDs.add(carID)
+
+                    # Break the loop if we have enough elements
+                    if len(carIDs) == 25:
+                        break
+
+            # Ensure the final list has at most 25 elements
+            carIDs = carIDs[:25]
             # print("Length of CarIDs",len(carIDs))
     
             
@@ -132,6 +145,5 @@ def FeedManagerMain(user_id, coordinates):
 
     except Exception as e:
         print("Exception in Main Function:", e)
-        
         
         
