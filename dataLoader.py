@@ -26,7 +26,9 @@ def dataGather(collection, car_id):
                 time["durationInMilliseconds"] for time in car_data.get("timeSpent", [])
             ]
             mean_time_spent = (
-                sum(time_spent_values) / len(time_spent_values) if time_spent_values else 0
+                sum(time_spent_values) / len(time_spent_values)
+                if time_spent_values
+                else 0
             )
             ai_score_last_value = (
                 car_data.get("AiScore", [])[-1] if car_data.get("AiScore") else 0
@@ -60,7 +62,8 @@ def dataGather(collection, car_id):
 
     except Exception as e:
         return "Error in dataGather function: ", e
-        
+
+
 # the data loader function for the recommadation model and the feed manager
 
 
@@ -79,11 +82,11 @@ def load_car_profiles_from_mongodb(user_id, user_coordinates):
                 "distanceField": "distance",
                 "spherical": True,
                 "maxDistance": 500 * 1000,  # in meters
-                "query":{
+                "query": {
                     "likes": {"$nin": [ObjectId(user_id)]},
                     "dislikes": {"$nin": [ObjectId(user_id)]},
                     "isActive": True,
-                }
+                },
             },
         },
         {
@@ -139,39 +142,51 @@ def load_car_profiles_from_mongodb(user_id, user_coordinates):
                 "engineSizeInLiter": engine_size_in_liter,
                 "ai_score": ai_score,
             }
-    
+
             car_profiles.append(car_profile)
 
         return car_profiles
-    
+
     except Exception as e:
         print("Error in load_car_profiles_from_mongodb function: ", e)
 
 
-
 def get_car_profiles_by_user_like(userId):
+    pipeline = [
+        {"$match": {"likes": {"$elemMatch": {"$eq": ObjectId(userId)}}}},
+        {
+            "$match": {
+                "timeSpent.userId": ObjectId(userId),
+                "timeSpent.isLiked": True,
+            }
+        },
+        {"$sort": {"timeSpent.createdOn": -1}},
+        {"$limit": 100},
+        {
+            "$project": {
+                "make": 1,
+                "fuelType": 1,
+                "bodyType": 1,
+                "engineSizeInLiter": 1,
+                "gearbox": 1,
+                "price": 1,
+                "AiScore": 1,
+            }
+        },
+    ]
+
     try:
+        startTime = time.time()
+
+        # Execute the pipeline
+        result = collection.aggregate(pipeline)
+
+        endTime = time.time()
+        print("Time taken to load car profiles from MongoDB: ", endTime - startTime)
+
+        # Extract relevant information from MongoDB query results
         car_profiles = []
 
-        # Specify the fields to retrieve
-        fields_to_retrieve = {
-            "make": 1,
-            "fuelType": 1,
-            "bodyType": 1,
-            "engineSizeInLiter": 1,
-            "gearbox": 1,
-            "price": 1,
-            "AiScore": 1,
-        }
-
-        # Specify the userId for filtering
-        user_id_to_find = ObjectId(userId)
-
-        # Query to find documents based on userId and retrieve specified fields
-        query = {"likes": user_id_to_find}
-        result = collection.find(query, fields_to_retrieve)
-
-        # Extract car profiles from MongoDB query results
         for item in result:
             car_id = str(item.get("_id", ""))
             make = item.get("make", "")
@@ -179,15 +194,15 @@ def get_car_profiles_by_user_like(userId):
             gearbox = item.get("gearbox", "")
             engine_size_in_liter = item.get("engineSizeInLiter", 0.0)
             price = item.get("price", 0.0)
-            ai_score = item.get("AiScore", [])[-1]
+            ai_score = item.get("lastAiScore", 0.0)
 
             car_profile = {
                 "carid": car_id,
                 "make": make,
                 "gearbox": gearbox,
                 "price": price,
-                "fuel_type": fuel_type,
-                "engine_size_in_liter": engine_size_in_liter,
+                "fueltype": fuel_type,
+                "engineSizeInLiter": engine_size_in_liter,
                 "ai_score": ai_score,
             }
 
@@ -196,7 +211,70 @@ def get_car_profiles_by_user_like(userId):
         return car_profiles
 
     except Exception as e:
-        print("Error in get_car_profiles_by_user_like function: ", e)
+        print("Error in load_car_profiles_from_mongodb function: ", e)
+
+
+def get_car_profiles_by_user_dislike(userId):
+    pipeline = [
+        {"$match": {"likes": {"$elemMatch": {"$eq": ObjectId(userId)}}}},
+        {
+            "$match": {
+                "timeSpent.userId": ObjectId(userId),
+                "timeSpent.isLiked": True,
+            }
+        },
+        {"$sort": {"timeSpent.createdOn": -1}},
+        {"$limit": 100},
+        {
+            "$project": {
+                "make": 1,
+                "fuelType": 1,
+                "bodyType": 1,
+                "engineSizeInLiter": 1,
+                "gearbox": 1,
+                "price": 1,
+                "AiScore": 1,
+            }
+        },
+    ]
+
+    try:
+        startTime = time.time()
+
+        # Execute the pipeline
+        result = collection.aggregate(pipeline)
+
+        endTime = time.time()
+        print("Time taken to load car profiles from MongoDB: ", endTime - startTime)
+
+        # Extract relevant information from MongoDB query results
+        car_profiles = []
+
+        for item in result:
+            car_id = str(item.get("_id", ""))
+            make = item.get("make", "")
+            fuel_type = item.get("fuelType", "")
+            gearbox = item.get("gearbox", "")
+            engine_size_in_liter = item.get("engineSizeInLiter", 0.0)
+            price = item.get("price", 0.0)
+            ai_score = item.get("lastAiScore", 0.0)
+
+            car_profile = {
+                "carid": car_id,
+                "make": make,
+                "gearbox": gearbox,
+                "price": price,
+                "fueltype": fuel_type,
+                "engineSizeInLiter": engine_size_in_liter,
+                "ai_score": ai_score,
+            }
+
+            car_profiles.append(car_profile)
+
+        return car_profiles
+
+    except Exception as e:
+        print("Error in load_car_profiles_from_mongodb function: ", e)
 
 
 def load_likes_interaction(userId, userLike):
@@ -215,56 +293,6 @@ def load_likes_interaction(userId, userLike):
 
     except Exception as e:
         print("Error in load_likes_interaction function: ", e)
-
-
-def get_car_profiles_by_user_dislike(userId):
-    try:
-        car_profiles = []
-
-        # Specify the fields to retrieve
-        fields_to_retrieve = {
-            "make": 1,
-            "fuelType": 1,
-            "bodyType": 1,
-            "engineSizeInLiter": 1,
-            "gearbox": 1,
-            "price": 1,
-            "AiScore": 1,
-        }
-
-        # Specify the userId for filtering
-        user_id_to_find = ObjectId(userId)
-
-        # Query to find documents based on userId and retrieve specified fields
-        query = {"dislikes": user_id_to_find}
-        result = collection.find(query, fields_to_retrieve)
-
-        # Extract car profiles from MongoDB query results
-        for item in result:
-            car_id = str(item.get("_id", ""))
-            make = item.get("make", "")
-            fuel_type = item.get("fuelType", "")
-            gearbox = item.get("gearbox", "")
-            engine_size_in_liter = item.get("engineSizeInLiter", 0.0)
-            price = item.get("price", 0.0)
-            ai_score = item.get("AiScore", [])[-1]
-
-            car_profile = {
-                "carid": car_id,
-                "make": make,
-                "gearbox": gearbox,
-                "price": price,
-                "fuel_type": fuel_type,
-                "engine_size_in_liter": engine_size_in_liter,
-                "ai_score": ai_score,
-            }
-
-            car_profiles.append(car_profile)
-
-        return car_profiles
-
-    except Exception as e:
-        print("Error in get_car_profiles_by_user_like function: ", e)
 
 
 def load_dislikes_interaction(userId, userDisLike):
@@ -286,9 +314,8 @@ def load_dislikes_interaction(userId, userDisLike):
 
 def mainReturn(carIds):
     try:
-
         car_profiles = []
-        
+
         object_ids = [ObjectId(carIds) for carIds in carIds]
 
         # Query to retrieve car data based on IDs
@@ -299,31 +326,32 @@ def mainReturn(carIds):
         # print(result)
 
         for item in result:
-            car_id = str(item.get('_id', ''))
-            make = item.get('make', None)
-            fuelType = item.get('fuelType', None)
-            gearbox = item.get('gearbox', None)
-            engineSizeInLiter = item.get('engineSizeInLiter', None)
-            price = item.get('price', None)
-            carBuyLink = item.get('carBuyLink', None)
-            carImages = item.get('carImages', [])
-            model = item.get('model', None)
-            variant = item.get('variant', None)
-            mileageInMiles = item.get('mileageInMiles', None)
-            year = item.get('year', None)
-            ageIdentifier = item.get('ageIdentifier', None)
-            bodyType = item.get('bodyType', None)
-            currency = item.get('currency', None)
-            description = item.get('description', None)
-            cityName = item.get('cityName', None)
-            fuelConsumptionInMPG = item.get('fuelConsumptionInMPG', None)
-            
+            car_id = str(item.get("_id", ""))
+            make = item.get("make", None)
+            fuelType = item.get("fuelType", None)
+            gearbox = item.get("gearbox", None)
+            engineSizeInLiter = item.get("engineSizeInLiter", None)
+            price = item.get("price", None)
+            carBuyLink = item.get("carBuyLink", None)
+            carImages = item.get("carImages", [])
+            model = item.get("model", None)
+            variant = item.get("variant", None)
+            mileageInMiles = item.get("mileageInMiles", None)
+            year = item.get("year", None)
+            ageIdentifier = item.get("ageIdentifier", None)
+            bodyType = item.get("bodyType", None)
+            currency = item.get("currency", None)
+            description = item.get("description", None)
+            cityName = item.get("cityName", None)
+            fuelConsumptionInMPG = item.get("fuelConsumptionInMPG", None)
+
             # Check for the existence of the 'location' field
-            location_data = item.get('location')
-            coordinates = location_data.get('coordinates', None) if location_data else None
+            location_data = item.get("location")
+            coordinates = (
+                location_data.get("coordinates", None) if location_data else None
+            )
             if coordinates is None:
                 location_data = None
-
 
             # Replace None values with null
             car_profile = {
@@ -344,16 +372,16 @@ def mainReturn(carIds):
                 "price": price,
                 "currency": currency,
                 "description": description,
-                "location":  None if coordinates is None else {
-                    "type": "Point",
-                    "coordinates": coordinates
-                },
-                "fuelConsumptionInMPG": fuelConsumptionInMPG
+                "location": None
+                if coordinates is None
+                else {"type": "Point", "coordinates": coordinates},
+                "fuelConsumptionInMPG": fuelConsumptionInMPG,
             }
 
             car_profiles.append(car_profile)
-            
+
         return car_profiles
 
     except Exception as e:
         print("Error in mainReturn function: ", e)
+

@@ -80,11 +80,12 @@ def FeedManagerMain(user_id, coordinates):
         # Load User Like History
         userLike = get_car_profiles_by_user_like(user_id)   
         # print("UserLike",userLike)
-             
-            
+                         
         #Load User Dislike History
         userDislike = get_car_profiles_by_user_dislike(user_id)   
         # print("UserDislike",userDislike)     
+        
+        # return {"len of like Cars":len(userLike),"len of Dislike Cars":len(userDislike),"userLike":userLike,"userDislike":userDislike}
         
         if userLike and userDislike:
             
@@ -134,9 +135,7 @@ def FeedManagerMain(user_id, coordinates):
             # print("len of CarIDs in else condition:::",len(carIDs))
             endTime = time.time()
             print("Time for getting carsID:", endTime - startTime)
-            
-            
-              
+                
         startTime = time.time()
         # Populating the CAR Objects
         carGets = mainReturn(carIDs)
