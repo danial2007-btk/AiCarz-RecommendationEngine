@@ -21,6 +21,8 @@ async def lifespan(app: FastAPI):
     
 app = FastAPI(lifespan=lifespan)
 
+# Base URL for the API
+app.baseURL = "https://aiengine.aicarz.com"
 
 # The single valid API key
 API_key = "lkjINRhG1rKRNc2kE5xfcK0hFJaz6Kvz1jux"

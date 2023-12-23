@@ -2,6 +2,9 @@ from bson import ObjectId
 import concurrent.futures
 import time
 
+import warnings
+warnings.filterwarnings("ignore") 
+
 # from memory_profiler import profile
 
 from mongodb import mongodbConn, carzcollection, carzdb
