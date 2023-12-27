@@ -216,7 +216,7 @@ def get_car_profiles_by_user_like(userId):
 
 def get_car_profiles_by_user_dislike(userId):
     pipeline = [
-        {"$match": {"likes": {"$elemMatch": {"$eq": ObjectId(userId)}}}},
+        {"$match": {"dislikes": {"$elemMatch": {"$eq": ObjectId(userId)}}}},
         {
             "$match": {
                 "timeSpent.userId": ObjectId(userId),
