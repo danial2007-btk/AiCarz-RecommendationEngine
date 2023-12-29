@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from pydantic import BaseModel
 from bson import ObjectId
 
-from main import AiScoreMain,FeedManagerMain
+from main import AiScoreMain,FeedManagerMain, modelStatsMain, LikeandDislikecount
 from mongodb import mongodbConn, carzcollection, usercollection
 
 # from memory_profiler import profile
@@ -36,7 +36,7 @@ def check_api_key(api_key: str = Query(..., description="API Key")):
 
 # **************************       APP CHECKING         **************************
 
-
+# Root Endpoint
 @app.get("/")
 def read_root():
     return {"message": "App is running successfully"}
@@ -154,3 +154,99 @@ async def feed_manager(
         # Handle exceptions, log them, and return an appropriate response
         raise HTTPException(status_code=500, detail=e)
 
+
+
+# **************************       Model Stats API ENDPOINT         **************************
+
+# Model Stats Endpoint
+class modelStatsInput(BaseModel):
+    user_id: str # User ID as input
+
+@app.post("/modelStats")
+async def modelStats(
+    modelstats: modelStatsInput,
+    api_key: str = Depends(check_api_key, use_cache=True),
+):  
+    longitude= 2.9916
+    latitude= 53.4048
+    
+    try:
+        coordinates = [longitude,latitude]
+        stats_output = modelStatsMain(modelstats.user_id, coordinates)
+        return stats_output
+    except Exception as e:
+        # Handle exceptions, log them, and return an appropriate response
+        raise HTTPException(status_code=500, detail=e)
+    
+
+
+    
+# **************************       Like and Dislike Count API ENDPOINT         **************************
+
+class LikeandDislikecountInput(BaseModel):
+    user_id: str # User ID as input
+    longitude: float # User longitude: float
+    latitude: float # User latitude: float
+
+@app.post("/likeanddislikecount")
+async def likeanddislikecount(
+    likeanddislikecount_data: LikeandDislikecountInput,
+    api_key: str = Depends(check_api_key, use_cache=True),
+):
+    # ======================= Checking if UserID is correct Object Id =======================
+    
+    # Check if user_id is a valid MongoDB ObjectId
+    if not ObjectId.is_valid(likeanddislikecount_data.user_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid user_id. Must be a valid MongoDB ObjectId.",
+        )
+    
+    # ======================= Checking if UserID is in Database or not =======================
+    
+    # Check if user_id exists in the database
+    if not usercollection.find_one({"_id": ObjectId(likeanddislikecount_data.user_id)}):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User Id not found in database.",
+        )
+    
+    # ===================== Validating the Longitude and Latitude is empty or not =====================
+    
+    # Validate input data
+    if not likeanddislikecount_data.longitude or not likeanddislikecount_data.latitude:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Longitude and latitude are required fields.",
+        )
+    
+    # ===================== Validating the Longitude and Latitude is empty or not =====================
+
+    # Validate longitude and latitude input data
+    try:
+        longitude = float(likeanddislikecount_data.longitude)
+        latitude = float(likeanddislikecount_data.latitude)
+        
+        # Check if longitude is in the valid range [-180, 180]
+        if not (-180 <= longitude <= 180):
+            raise ValueError("Longitude format is invalid.")
+
+        # Check if latitude is in the valid range [-90, 90]
+        if not (-90 <= latitude <= 90):
+            raise ValueError("Latitude format is invalid.")
+
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid longitude or latitude format.",
+        )
+        
+    try:
+        coordinates = [likeanddislikecount_data.longitude, likeanddislikecount_data.latitude]
+        likeanddislikecount_output = LikeandDislikecount(likeanddislikecount_data.user_id, coordinates)
+        return likeanddislikecount_output
+
+    except Exception as e:
+        # Handle exceptions, log them, and return an appropriate response
+        raise HTTPException(status_code=500, detail=e)
+    

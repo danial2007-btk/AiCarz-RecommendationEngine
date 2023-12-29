@@ -16,6 +16,7 @@ from dataLoader import dataGather
 # The below work is a structure of Main function where the feed manager will be called and the recommendations will be generated
 
 from model import get_top_n_recommendations
+from modelStat import get_top_n_recommendations as get_top_n_recommendations_stats
 from feedManager import feedCarId, aiScore_carIDs
 from dataLoader import get_car_profiles_by_user_like,get_car_profiles_by_user_dislike,load_car_profiles_from_mongodb,load_likes_interaction,load_dislikes_interaction,mainReturn
 
@@ -148,4 +149,51 @@ def FeedManagerMain(user_id, coordinates):
     except Exception as e:
         print("Exception in Main Function:", e)
         
+
+def modelStatsMain(userId, coordinates):
+    
+    userId = userId
+    coordinates = coordinates
+    
+    try:
+        # load Car Objects from the MongoDB
+        carData = load_car_profiles_from_mongodb(userId, coordinates)
         
+        #load User Like History
+        userLike = get_car_profiles_by_user_like(userId)
+
+        
+        if userLike:
+            
+            #Load User Interaction History
+            userInteraction_like = load_likes_interaction(userId, userLike)
+            
+            # Get Like Recommendation
+            likeRecommended = get_top_n_recommendations_stats(userId, carData, userLike, userInteraction_like)
+            # print("len of LikeRecommended",len(likeRecommended))
+
+            return likeRecommended
+        
+    except Exception as e:
+        print("Exception in modelStatsMain Function:", e)
+        
+        
+def LikeandDislikecount(userId, coordinates):
+        
+        userId = userId
+        coordinates = coordinates
+        
+        try:
+            # load Car Objects from the MongoDB
+            carData = load_car_profiles_from_mongodb(userId, coordinates)
+            
+            #load User Like History
+            userLike = get_car_profiles_by_user_like(userId)
+            
+            #load User Dislike History
+            userDislike = get_car_profiles_by_user_dislike(userId)
+            
+            return {"len of like Cars":len(userLike),"len of Dislike Cars":len(userDislike), "userLike":userLike, "userDislike":userDislike}
+            
+        except Exception as e:
+            print("Exception in LikeandDislikecount Function:", e)

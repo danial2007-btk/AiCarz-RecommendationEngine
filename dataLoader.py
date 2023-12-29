@@ -87,7 +87,7 @@ def load_car_profiles_from_mongodb(user_id, user_coordinates):
                     "dislikes": {"$nin": [ObjectId(user_id)]},
                     "isActive": True,
                 },
-            },
+            }, 
         },
         {
             "$limit": 3000,
@@ -220,7 +220,7 @@ def get_car_profiles_by_user_dislike(userId):
         {
             "$match": {
                 "timeSpent.userId": ObjectId(userId),
-                "timeSpent.isLiked": True,
+                "timeSpent.isLiked": False,
             }
         },
         {"$sort": {"timeSpent.createdOn": -1}},
