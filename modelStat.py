@@ -127,14 +127,22 @@ def get_top_n_recommendations(user_id, car_data, user_preference_data, user_inte
         # Add percentage and group information to the recommendations
         for i, recommendation in enumerate(top_recommendations):
             recommendation['percentage_recommendation'] = percentage_recommendation[i]
+            
+            #round the reocmmendation to 2 decimal places
+            rounded_percentage = round(recommendation['percentage_recommendation'])
 
-            # Adjust group criteria based on your preferences
-            if recommendation['percentage_recommendation'] >= 60:
+            if rounded_percentage >= 81:
+                recommendation['group'] = 'Most Recommended'
+            elif 61 <= rounded_percentage <= 80:
                 recommendation['group'] = 'Highly Recommended'
-            elif recommendation['percentage_recommendation'] >= 40:
+            elif 41 <= rounded_percentage <= 60:
                 recommendation['group'] = 'Moderately Recommended'
-            else:
+            elif 21 <= rounded_percentage <= 40:
                 recommendation['group'] = 'Slightly Recommended'
+            elif 0 <= rounded_percentage <= 20:
+                recommendation['group'] = 'Least Recommended'
+            else:
+                recommendation['group'] = 'Not Recommended'
 
         return top_recommendations
 

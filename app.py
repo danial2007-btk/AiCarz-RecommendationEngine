@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from bson import ObjectId
 
 from main import AiScoreMain,FeedManagerMain, modelStatsMain, LikeandDislikecount
+from adStatus import carAdMain
 from mongodb import mongodbConn, carzcollection, usercollection
 
 # from memory_profiler import profile
@@ -107,7 +108,7 @@ async def feed_manager(
     if not usercollection.find_one({"_id": ObjectId(feed_data.user_id)}):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User Id not found in database.",
+            detail="User Id not found in database .",
         )
         
 
@@ -250,3 +251,48 @@ async def likeanddislikecount(
         # Handle exceptions, log them, and return an appropriate response
         raise HTTPException(status_code=500, detail=e)
     
+
+
+
+# **************************       Car AD Checker API ENDPOINT         **************************
+
+class AdCarIdInput(BaseModel):
+    carid: str  # Car ID as input
+
+# car AdChecking API Endpoint
+# @profile
+@app.post("/adChecker")
+async def car_ad_checker(
+    car_data: AdCarIdInput,
+    api_key: str = Depends(check_api_key, use_cache=True),
+):
+
+# ================== Checking Valid ObjectId for Car ID ==================
+
+    # Check if car_id is a valid MongoDB ObjectId
+    if not ObjectId.is_valid(car_data.carid):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid car_id. Must be a valid MongoDB ObjectId.",
+        )
+        
+# ======================= Checking if UserID is in Database or not =======================
+    
+    # Check if user_id exists in the database
+    if not carzcollection.find_one({"_id": ObjectId(car_data.carid)}):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User Id not found in database.",
+        )
+        
+# ======================= Ad Checking =======================
+
+    try:
+            car_ad_score = carAdMain(car_data.carid)
+            return {"Car Ad Checker": car_ad_score}
+
+    except Exception as e:
+        # Handle exceptions, log them, and return an appropriate response
+        raise HTTPException(status_code=500, detail="Internal Server Error") from e
+ 
+ 

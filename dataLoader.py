@@ -15,6 +15,7 @@ collection = carzcollection
 # logging.basicConfig(level=logging.INFO)
 # logger = logging.getLogger(__name__)
 
+# the dataGather function is for the AI Score
 
 def dataGather(collection, car_id):
     try:
@@ -344,6 +345,7 @@ def mainReturn(carIds):
             description = item.get("description", None)
             cityName = item.get("cityName", None)
             fuelConsumptionInMPG = item.get("fuelConsumptionInMPG", None)
+            isActive = item.get("isActive",None)
 
             # Check for the existence of the 'location' field
             location_data = item.get("location")
@@ -372,6 +374,7 @@ def mainReturn(carIds):
                 "price": price,
                 "currency": currency,
                 "description": description,
+                "isActive":isActive,
                 "location": None
                 if coordinates is None
                 else {"type": "Point", "coordinates": coordinates},
@@ -385,3 +388,31 @@ def mainReturn(carIds):
     except Exception as e:
         print("Error in mainReturn function: ", e)
 
+
+# the data Gather function below is for the Ad Status API
+def getData(carID):
+    carId = ObjectId(carID)
+
+    query = {"_id": carId}
+
+    data = []
+
+    # Fetch the data
+    result = list(carzcollection.find(query))
+
+    for item in result:
+        car_id = str(item.get("_id", ""))
+        description = str(item.get("description", ""))
+        carImages = (item.get("carImages", []))
+        adStatus = str(item.get("adStatus",""))
+
+        car_data = {
+            "Id": car_id,
+            "description": description,
+            "images": carImages,
+            "adStatus":adStatus
+        }
+
+        data.append(car_data)
+
+    return data
