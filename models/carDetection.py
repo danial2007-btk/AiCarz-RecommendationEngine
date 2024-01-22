@@ -35,7 +35,8 @@ def preprocess_image_from_url(image_url):
     
     except Exception as e:
         return {"response",e}
-    
+
+
     
 def imageChecker(image_url):
     try:
@@ -47,8 +48,8 @@ def imageChecker(image_url):
         # Convert the predictions to binary classes
         predicted_class = 1 if predictions[0] > 0.5 else 0
 
-        result_dict = {image_url: predicted_class}
+#         result_dict = {image_url: predicted_class}
 
-        return result_dict
+        return predicted_class
     except Exception as e:
         return (f"Error inside the ImageChecker Function {e}")

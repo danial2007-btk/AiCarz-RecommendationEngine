@@ -5,49 +5,46 @@ from models.nlpEngine import descriptionChecker
 from dataLoader import getData
 
 def carAdMain(carID):
-    
     try:
-        #check the car data
+        # check the car data
         carData = getData(carID)
 
-        # print("Car Data:",carData)
-        
+        # print("Car Data:", carData)
+
         if carData == None:
-            return {"Response":"The data of requested Id is not avaibale"}
+            return {"Response": "The data of the requested Id is not available"}
 
         if carData[0].get('adStatus') != "Pending":
-            return {"Response":"The Car AdStatus is not in Pending State"}
-        
+            return {"Response": "The Car AdStatus is not in Pending State"}
+
         ID = carData[0].get('Id')
         carImages = carData[0].get('images')
-        # print("carImages",carImages)
+        # print("carImages", carImages)
 
-        imageRes = []
-        if carImages != None:
-            for imagesCheck in carImages:
-                imageRes.append(imageChecker(imagesCheck))
+        if carImages is not None:
+            imageRes = [imageChecker(image) for image in carImages]
+            # print("Before Filtering the Images:", imageRes)
 
-            # print("Before Filtering the Images:",imageRes)
+            filtered_carImage = [img for img, result in zip(carImages, imageRes) if result == 1]
 
-        filteringCarImage = [d for d in imageRes if all(value != 0 for value in d.values())]
+            # print("After Filtering the Images", filtered_carImage)
+            # print("len of Filtering Image", len(filtered_carImage))
 
-        # print("After Filtering the Images",filteringCarImage)
-        # print("len of Filtering Image",len(filteringCarImage))
-        
-        if len(filteringCarImage) == 0:
-            return {"Response":"Rejected"}
+            if len(filtered_carImage) == 0:
+                return {'Id': ID, 'Description':carDesc, 'CheckedDescription': [], 'images':carImages, 'CheckedImages': [], 'adStatus': 'Rejected'}
 
-        carDesc = carData[0].get('description')
-        # print("Description Before preprocessing:",carDesc)
-        descriptionCheck = descriptionChecker(carDesc)
-        # print("Description After preprocessing", descriptionCheck)
+            carDesc = carData[0].get('description')
+            # print("Description Before preprocessing:", carDesc)
+            descriptionCheck = descriptionChecker(carDesc)
+            # print("Description After preprocessing", descriptionCheck)
 
-        return {'Id':ID,'description':descriptionCheck,'images':filteringCarImage,'adStatus':'Approved'}
-    
+            return {'Id': ID, 'Description':carDesc, 'CheckedDescription': descriptionCheck, 'images':carImages, 'CheckedImages': filtered_carImage, 'adStatus': 'Approved'}
+        else:
+            return {"Response": "No images available for this car ad."}
+
     except Exception as e:
-        return (f"Error inside the carAdMain Function {e}")
-    
-    
-    
+        return f"Error inside the carAdMain Function {e}"
+
+
 # aa = carAdMain("659fa7c195275f2595fc6045")
 # print(aa)
