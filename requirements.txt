@@ -9,12 +9,9 @@ gunicorn
 bson
 scikit-learn
 scikit-surprise
-pandas
-scikit-learn
 nltk
 joblib
 langdetect
 requests
 Pillow
-numpy
 tensorflow

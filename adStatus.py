@@ -19,6 +19,8 @@ def carAdMain(carID):
 
         ID = carData[0].get('Id')
         carImages = carData[0].get('images')
+        carDesc = carData[0].get('description')
+        
         # print("carImages", carImages)
 
         if carImages is not None:
@@ -30,15 +32,17 @@ def carAdMain(carID):
             # print("After Filtering the Images", filtered_carImage)
             # print("len of Filtering Image", len(filtered_carImage))
 
+            # Find rejected images
+            rejectedImages = list(set(carImages) - set(filtered_carImage))
+            
             if len(filtered_carImage) == 0:
-                return {'Id': ID, 'Description':carDesc, 'CheckedDescription': " ", 'images':carImages, 'CheckedImages': [], 'adStatus': 'Rejected'}
+                return {'Id': ID, 'CheckedDescription': carDesc, 'rejectedImages':rejectedImages,'adStatus': 'Rejected'}
 
-            carDesc = carData[0].get('description')
             # print("Description Before preprocessing:", carDesc)
             descriptionCheck = descriptionChecker(carDesc)
             # print("Description After preprocessing", descriptionCheck)
 
-            return {'Id': ID, 'Description':carDesc, 'CheckedDescription': descriptionCheck, 'images':carImages, 'CheckedImages': filtered_carImage, 'adStatus': 'Approved'}
+            return {'Id': ID, 'CheckedDescription': descriptionCheck,'RejectedImages': rejectedImages, 'adStatus': 'Approved'}
         else:
             return {"Response": "No images available for this car ad."}
 
