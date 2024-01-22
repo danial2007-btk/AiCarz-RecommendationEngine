@@ -31,7 +31,7 @@ def carAdMain(carID):
             # print("len of Filtering Image", len(filtered_carImage))
 
             if len(filtered_carImage) == 0:
-                return {'Id': ID, 'Description':carDesc, 'CheckedDescription': [], 'images':carImages, 'CheckedImages': [], 'adStatus': 'Rejected'}
+                return {'Id': ID, 'Description':carDesc, 'CheckedDescription': " ", 'images':carImages, 'CheckedImages': [], 'adStatus': 'Rejected'}
 
             carDesc = carData[0].get('description')
             # print("Description Before preprocessing:", carDesc)
@@ -45,6 +45,3 @@ def carAdMain(carID):
     except Exception as e:
         return f"Error inside the carAdMain Function {e}"
 
-
-# aa = carAdMain("659fa7c195275f2595fc6045")
-# print(aa)
