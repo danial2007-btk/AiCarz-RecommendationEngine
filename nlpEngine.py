@@ -64,37 +64,37 @@
 
 # def descriptionChecker(text):
     
-    # Load the trained model
-    model = joblib.load(r"models\NLPmodel.pkl")
+#     # Load the trained model
+#     model = joblib.load(r"models\NLPmodel.pkl")
     
-    try:
-        #checking if text is not empty
-        if text is not None:
+#     try:
+#         #checking if text is not empty
+#         if text is not None:
             
-            #checking that the text description is in English
-            check_eng = is_english(text)
+#             #checking that the text description is in English
+#             check_eng = is_english(text)
 
-            if check_eng is True:
+#             if check_eng is True:
 
-                #checking that the description text is related to Car Ad or Not
-                ## Preprocessing the Text for Context Model
-                clean_sentence = clean_and_preprocess_text(text)
+#                 #checking that the description text is related to Car Ad or Not
+#                 ## Preprocessing the Text for Context Model
+#                 clean_sentence = clean_and_preprocess_text(text)
                 
-                ## Getting the context of the text description
-                prediction = model.predict([clean_sentence])
+#                 ## Getting the context of the text description
+#                 prediction = model.predict([clean_sentence])
 
-                #Checking that the prediciton is equals to Car Ad Description
-                if prediction[0] == 'Car Ad Description':
+#                 #Checking that the prediciton is equals to Car Ad Description
+#                 if prediction[0] == 'Car Ad Description':
 
-                    #Removing the badwords form the Text
-                    sword_remove = remove_badwords(text)
+#                     #Removing the badwords form the Text
+#                     sword_remove = remove_badwords(text)
 
-                    #Removing the Phone NO and Email Address from the text
-                    contact_info = remove_contact_info(sword_remove)
+#                     #Removing the Phone NO and Email Address from the text
+#                     contact_info = remove_contact_info(sword_remove)
 
-                    return contact_info
+#                     return contact_info
 
-        return "No Description Available."
+#         return "No Description Available."
     
-    except Exception as e:
-        return (f"Error inside the description Checker Function :",e)    
+#     except Exception as e:
+#         return (f"Error inside the description Checker Function :",e)    
