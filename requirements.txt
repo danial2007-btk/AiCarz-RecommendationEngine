@@ -9,9 +9,10 @@ gunicorn
 bson
 scikit-learn
 scikit-surprise
-nltk
-joblib
 random
+# nltk
+# joblib
+# random
 # langdetect
 # requests
 # Pillow
