@@ -9,7 +9,7 @@ gunicorn
 bson
 scikit-learn
 scikit-surprise
-random
+
 # nltk
 # joblib
 # random
