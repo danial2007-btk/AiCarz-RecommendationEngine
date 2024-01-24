@@ -11,7 +11,8 @@ scikit-learn
 scikit-surprise
 nltk
 joblib
-langdetect
-requests
-Pillow
-tensorflow
+random
+# langdetect
+# requests
+# Pillow
+# tensorflow

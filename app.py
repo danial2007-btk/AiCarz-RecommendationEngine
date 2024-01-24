@@ -290,7 +290,7 @@ async def car_ad_checker(
 
     try:
             # car_ad_score = carAdMain(car_data.carid)
-            car_ad_score  =dummy(car_data.carid)
+            car_ad_score = dummy(car_data.carid)
             return {"Car Ad Checker": car_ad_score}
 
     except Exception as e:
