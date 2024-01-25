@@ -59,7 +59,7 @@ def dummy(carID):
     # Construct the response based on the random result
     response = {
         'Id': carID,
-        'rejectedImages': ["a","b"],
+        'rejectedImages': [],
         'checkedDescription': "",
         'adStatus': 'Approved' if is_approved else 'Rejected'
     }
