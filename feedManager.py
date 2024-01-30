@@ -113,3 +113,5 @@ def aiScore_carIDs(car_profiles):
     
     except Exception as e:
         print("Exception in AiScore_carIDs Function:", e)
+        
+        

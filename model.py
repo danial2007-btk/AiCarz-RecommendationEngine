@@ -80,3 +80,5 @@ def get_top_n_recommendations(user_id, car_data, user_preference_data, user_inte
 
     except Exception as e:
         print("Exception in Recommendation Function:", e)
+        
+        

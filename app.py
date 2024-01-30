@@ -4,8 +4,8 @@ from pydantic import BaseModel
 from bson import ObjectId
 
 from main import AiScoreMain,FeedManagerMain, modelStatsMain, LikeandDislikecount
-# from adStatus import carAdMain
-from adStatus import dummy
+from adStatus import carAdMain
+# from adStatus import dummy
 from mongodb import mongodbConn, carzcollection, usercollection
 
 # from memory_profiler import profile 
@@ -291,8 +291,8 @@ try:
     # ======================= Ad Checking =======================
 
         try:
-                # car_ad_score = carAdMain(car_data.carid)
-                car_ad_score = dummy(car_data.carid)
+                car_ad_score = carAdMain(car_data.carid)
+                # car_ad_score = dummy(car_data.carid)
                 return car_ad_score
 
         except Exception as e:
