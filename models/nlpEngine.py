@@ -1,10 +1,5 @@
 import pandas as pd
 import re
-# from sklearn.model_selection import train_test_split
-# from sklearn.feature_extraction.text import TfidfVectorizer
-# from sklearn.ensemble import RandomForestClassifier
-# from sklearn.pipeline import Pipeline
-# from sklearn.metrics import classification_report
 from nltk.stem import WordNetLemmatizer
 import io
 import requests
@@ -109,5 +104,5 @@ def descriptionChecker(text):
         return "No Description Available."
     
     except Exception as e:
-        return (f"Error inside the description Checker Function :",e)    
+        return ("Error inside the description Checker Function :",e)    
     

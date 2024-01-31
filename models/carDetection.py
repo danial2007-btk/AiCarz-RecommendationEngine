@@ -1,28 +1,21 @@
-# import io
 import requests
 from PIL import Image
 from io import BytesIO
 import numpy as np
 import requests
-
 import warnings
-warnings.filterwarnings("ignore") 
-
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.utils import get_file
-import numpy as np
-from PIL import Image
-from io import BytesIO
+# from tensorflow import get_file, load_model, image
+
+warnings.filterwarnings("ignore") 
 
 # URL of the Keras model in HDF5 format
 H5_url = 'https://aitoolmodel.s3.eu-west-2.amazonaws.com/models/modelVGG.h5'
 
 # Load the Keras model
 model = load_model(get_file('modelVGG.h5', H5_url))
-
-# # Load the saved model
-# model = load_model('models\modelVGG.h5')
 
 # Function to load and preprocess an image from URL
 def preprocess_image_from_url(image_url):
