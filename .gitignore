@@ -11,5 +11,8 @@ modelLike.py
 modelDislike.py
 xtraWork.py
 
+.pytest_cache
 
 /__pycache__
+
+models/__pycache__/
