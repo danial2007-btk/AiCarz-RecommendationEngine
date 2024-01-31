@@ -1,8 +1,9 @@
-import io
+# import io
 import requests
 from PIL import Image
 from io import BytesIO
 import numpy as np
+
 # from keras.preprocessing import image
 # from keras.models import load_model
 

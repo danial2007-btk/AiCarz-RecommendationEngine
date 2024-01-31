@@ -1,10 +1,5 @@
 from bson import ObjectId
-import pymongo
 import time
-import logging
-import random
-from fastapi.responses import JSONResponse
-from concurrent.futures import ThreadPoolExecutor
 
 from AiScore import AIScoreInput
 from mongodb import mongodbConn, carzcollection, carzdb

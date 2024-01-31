@@ -1,16 +1,16 @@
 import pandas as pd
 import re
-from sklearn.model_selection import train_test_split
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.pipeline import Pipeline
-from sklearn.metrics import classification_report
+# from sklearn.model_selection import train_test_split
+# from sklearn.feature_extraction.text import TfidfVectorizer
+# from sklearn.ensemble import RandomForestClassifier
+# from sklearn.pipeline import Pipeline
+# from sklearn.metrics import classification_report
 from nltk.stem import WordNetLemmatizer
 import io
 import requests
 import joblib
 from langdetect import detect
-from sklearn.model_selection import GridSearchCV
+# from sklearn.model_selection import GridSearchCV
 
 # Function to clean and preprocess the text
 def clean_and_preprocess_text(text):

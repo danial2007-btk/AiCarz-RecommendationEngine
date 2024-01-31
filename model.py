@@ -2,7 +2,7 @@ import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
 from surprise import Dataset, Reader, SVD
-from collections import defaultdict
+# from collections import defaultdict
 
 def get_top_n_recommendations(user_id, car_data, user_preference_data, user_interaction_data):
     
