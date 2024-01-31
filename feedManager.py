@@ -1,5 +1,4 @@
 import random
-from dataLoader import load_car_profiles_from_mongodb
 
 def extract_car_ids_by_ai_score_range(car_profiles):
     ai_score_ranges = [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5)]
