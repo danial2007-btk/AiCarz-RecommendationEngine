@@ -8,14 +8,12 @@ gunicorn==21.2.0
 scikit-learn==1.3.0
 scikit-surprise==1.1.3
 pillow==8.4.0
-requests
-tensorflow
-bson
-pydantic_core
-
+requests==2.31.0
+tensorflow==2.15.0
+pydantic==1.10.8
+tensorflow-io-gcs-filesystem==0.31.0
 
 # boto3==1.18.92
-
 # nltk
 # joblib
 # random

@@ -3,11 +3,11 @@ import requests
 from PIL import Image
 from io import BytesIO
 import numpy as np
-
-# from keras.preprocessing import image
-# from keras.models import load_model
-
 import requests
+
+import warnings
+warnings.filterwarnings("ignore") 
+
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.utils import get_file
