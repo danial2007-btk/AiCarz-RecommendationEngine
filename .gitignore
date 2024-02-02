@@ -16,3 +16,10 @@ xtraWork.py
 /__pycache__
 
 models/__pycache__/
+
+models/carDetection.py
+models/nlpEngine.py
+
+adStatus.py
+
+models
