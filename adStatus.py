@@ -1,6 +1,6 @@
 # from bson import ObjectId
 # import io
-
+import random
 # from models.carDetection import imageChecker
 # from models.nlpEngine import descriptionChecker
 # from dataLoader import getData
@@ -52,17 +52,17 @@
 
 
 
-# def dummy(carID):
+def dummy(carID):
     
-#     is_approved = random.choice([True, False])
+    is_approved = random.choice([True, False])
 
-#     # Construct the response based on the random result
-#     response = {
-#         'Id': carID,
-#         'rejectedImages': [],
-#         'checkedDescription': "",
-#         'adStatus': 'Approved' if is_approved else 'Rejected'
-#     }
+    # Construct the response based on the random result
+    response = {
+        'Id': carID,
+        'rejectedImages': [],
+        'checkedDescription': "",
+        'adStatus': 'Approved' if is_approved else 'Rejected'
+    }
 
-#     return response
+    return response
 
