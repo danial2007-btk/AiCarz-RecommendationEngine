@@ -8,7 +8,7 @@ def dummy(carID):
     response = {
         'Id': carID,
         'rejectedImages': [],
-        'checkedDescription': "",
+        'CheckedDescription': "",
         'adStatus': 'Approved' if is_approved else 'Rejected'
     }
 
