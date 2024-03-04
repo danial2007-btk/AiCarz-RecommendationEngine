@@ -62,6 +62,12 @@ try:
     @app.get("/")
     def read_root():
         return {"message": "App is running successfully"}
+    
+    #************************** ANTI BANTI SHATI CODE NA CHALA TO **************************
+    
+    @app.get("/root")
+    def read_root():
+        return {"message": "Insan Ban Jaa Code"}
 
     # **************************       AI SCORE API ENDPOINT         **************************
 
@@ -353,8 +359,6 @@ try:
     async def tire_checker(file_input: CarTireInput = Depends(), api_key: str = Depends(check_api_key, use_cache=True)):
         try:
             contents = await file_input.file.read()
-            # Process car tire analysis using file_input.user_id
-            # Replace the following line with your actual implementation
             result = carTire(contents)
             return {"result": result}
         except ValueError as e:
@@ -377,7 +381,6 @@ try:
             return StreamingResponse(BytesIO(contents), media_type=panel_input.file.content_type)
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-
 
 
 except Exception as e:
