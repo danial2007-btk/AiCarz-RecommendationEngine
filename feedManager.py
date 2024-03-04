@@ -33,7 +33,7 @@ def extract_car_ids_by_ai_score_range(car_profiles):
                         range_car_ids.add(profile['carid'])
                         break
             
-            unique_car_ids.update(range_car_ids)  # Add the car IDs from the range to the set
+            unique_car_ids.update(range_car_ids)
 
         return unique_car_ids
     except Exception as e:
@@ -69,7 +69,6 @@ def feedCarId(car_profiles):
 def aiScore_carIDs(car_profiles):
     
     try:
-            
         ai_score_ranges = [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5)]
         unique_car_ids = set()
         car_count = 0
@@ -103,6 +102,7 @@ def aiScore_carIDs(car_profiles):
 
             unique_car_ids.update(range_car_ids)  # Add the car IDs from the range to the set
             car_count += len(range_car_ids)
+            print("Inside the Ai-Score Range Car Length:",car_count)
 
             # Check if we have collected the top 25 car IDs
             if car_count >= 25:

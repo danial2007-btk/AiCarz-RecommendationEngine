@@ -12,6 +12,7 @@ collection = carzcollection
 
 # the dataGather function is for the AI Score
 
+
 def dataGather(collection, car_id):
     try:
         car_object_id = ObjectId(car_id)
@@ -83,7 +84,7 @@ def load_car_profiles_from_mongodb(user_id, user_coordinates):
                     "dislikes": {"$nin": [ObjectId(user_id)]},
                     "isActive": True,
                 },
-            }, 
+            },
         },
         {
             "$limit": 3000,
@@ -104,6 +105,12 @@ def load_car_profiles_from_mongodb(user_id, user_coordinates):
                 "lastAiScore": {"$arrayElemAt": ["$AiScore", -1]},
             },
         },
+        # {
+        #     "$match": {
+        #         "carImages": {"$exists": True},
+        #         "$expr": {"$gt": [{"$size": {"$ifNull": ["$carImages", []]}}, 1]},
+        #     }
+        # },
         {
             "$sort": {
                 "lastAiScore": -1,
@@ -340,7 +347,7 @@ def mainReturn(carIds):
             description = item.get("description", None)
             cityName = item.get("cityName", None)
             fuelConsumptionInMPG = item.get("fuelConsumptionInMPG", None)
-            isActive = item.get("isActive",None)
+            isActive = item.get("isActive", None)
 
             # Check for the existence of the 'location' field
             location_data = item.get("location")
@@ -369,10 +376,12 @@ def mainReturn(carIds):
                 "price": price,
                 "currency": currency,
                 "description": description,
-                "isActive":isActive,
-                "location": None
-                if coordinates is None
-                else {"type": "Point", "coordinates": coordinates},
+                "isActive": isActive,
+                "location": (
+                    None
+                    if coordinates is None
+                    else {"type": "Point", "coordinates": coordinates}
+                ),
                 "fuelConsumptionInMPG": fuelConsumptionInMPG,
             }
 
@@ -398,17 +407,16 @@ def getData(carID):
     for item in result:
         car_id = str(item.get("_id", ""))
         description = str(item.get("description", ""))
-        carImages = (item.get("carImages", []))
-        adStatus = str(item.get("adStatus",""))
+        carImages = item.get("carImages", [])
+        adStatus = str(item.get("adStatus", ""))
 
         car_data = {
             "Id": car_id,
             "description": description,
             "images": carImages,
-            "adStatus":adStatus
+            "adStatus": adStatus,
         }
 
         data.append(car_data)
 
     return data
-

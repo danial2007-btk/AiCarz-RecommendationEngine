@@ -1,12 +1,20 @@
-from fastapi import FastAPI, HTTPException, Depends, Query, status
+from fastapi import FastAPI, HTTPException, Depends, Query, status,File, UploadFile,Request
+from fastapi.responses import StreamingResponse
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
+from io import BytesIO 
+
+
 from contextlib import asynccontextmanager
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from bson import ObjectId
 
 from main import AiScoreMain,FeedManagerMain, modelStatsMain, LikeandDislikecount
 # from adStatus import carAdMain
 
-from adStatus import dummy
+from adStatus import dummy # Rempve This
+from dummyFunction import carTire # Remove This
+
 from mongodb import mongodbConn, carzcollection, usercollection
 
 # from memory_profiler import profile 
@@ -183,9 +191,7 @@ try:
             # Handle exceptions, log them, and return an appropriate response
             raise HTTPException(status_code=500, detail=e)
         
-
-
-        
+   
     # **************************       Like and Dislike Count API ENDPOINT         **************************
 
     class LikeandDislikecountInput(BaseModel):
@@ -256,8 +262,6 @@ try:
             raise HTTPException(status_code=500, detail=e)
         
 
-
-
     # **************************       Car AD Checker API ENDPOINT         **************************
 
     class AdCarIdInput(BaseModel):
@@ -300,6 +304,89 @@ try:
             # Handle exceptions, log them, and return an appropriate response
             raise HTTPException(status_code=500, detail="Internal Server Error") from e
     
+    
+# **************************       Car Body Pannel Gap API ENDPOINT         **************************
+    class PanelInput(BaseModel):
+        file: UploadFile
+    
+        # Custom validator to check file format
+        @validator("file")
+        def check_file_format(cls, v):
+            allowed_formats = ["image/png", "image/jpeg", "image/jpg"]
+            if v.content_type not in allowed_formats:
+                raise ValueError("Invalid file type: Only PNG, JPG, and JPEG are allowed.")
+            return v
+
+    @app.post("/panelgap")
+    async def panelgap(
+        panel_input: PanelInput = Depends(),
+        api_key: str = Depends(check_api_key),
+    ):
+        try:
+            # Access the uploaded file using panel_input.file
+            contents = await panel_input.file.read()
+            # Returning the image as a StreamingResponse
+            return StreamingResponse(BytesIO(contents), media_type=panel_input.file.content_type)
+
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+# **************************       Car Tier Tread API ENDPOINT         **************************
+
+
+    class CatchLargeUploadMiddleware(BaseHTTPMiddleware):
+        async def dispatch(self, request: Request, call_next):
+            # Attempt to catch large uploads
+            if "content-length" in request.headers:
+                content_length = int(request.headers["content-length"])
+                max_size = 5 * 1024 * 1024  # 5 MB
+                if content_length > max_size:
+                    return JSONResponse(
+                        status_code=413,
+                        content={"message": "Please upload a file of maximum 5 MB."},
+                    )
+            response = await call_next(request)
+            return response
+
+    # Add the middleware to the application
+    app.add_middleware(CatchLargeUploadMiddleware)
+
+    # Define a BaseModel for the file upload request
+    class FileUpload(BaseModel):
+        file: UploadFile
+
+        # Custom validator to check file format
+        @validator("file")
+        def check_file_format(cls, v):
+            allowed_formats = ["image/png", "image/jpeg", "image/jpg"]
+            if v.content_type not in allowed_formats:
+                raise ValueError(
+                    "Invalid file type: Only PNG, JPG, and JPEG are allowed."
+                )
+            return v
+
+    @app.post("/tirechecker")
+    async def tirechecker(
+        file: UploadFile = File(...),
+        api_key: str = Depends(check_api_key, use_cache=True),
+    ):
+        try:
+            # Read image file
+            contents = await file.read()
+
+            # Preprocess the image
+            result = carTire(contents)
+
+            # Make prediction
+            # result = predict_image(img_array)
+
+            return {"result": result}
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+
 except Exception as e:
     print(e) 
 
