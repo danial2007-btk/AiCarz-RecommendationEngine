@@ -314,42 +314,11 @@ try:
         except Exception as e:
             # Handle exceptions, log them, and return an appropriate response
             raise HTTPException(status_code=500, detail="Internal Server Error") from e
-
-    # **************************       Car Body Pannel Gap API ENDPOINT         **************************
-    class PanelInput(BaseModel):
-        file: UploadFile
-
-        # Custom validator to check file format
-        @validator("file")
-        def check_file_format(cls, v):
-            allowed_formats = ["image/png", "image/jpeg", "image/jpg"]
-            if v.content_type not in allowed_formats:
-                raise ValueError(
-                    "Invalid file type: Only PNG, JPG, and JPEG are allowed."
-                )
-            return v
-
-    @app.post("/panelgap")
-    async def panelgap(
-        panel_input: PanelInput = Depends(),
-        api_key: str = Depends(check_api_key),
-    ):
-        try:
-            # Access the uploaded file using panel_input.file
-            contents = await panel_input.file.read()
-            # Returning the image as a StreamingResponse
-            return StreamingResponse(
-                BytesIO(contents), media_type=panel_input.file.content_type
-            )
-
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-
-    # **************************       Car Tier Tread API ENDPOINT         **************************
-
+ 
+    # **************************       BODY INPUT FOR API ENDPOINT         **************************
+   
     class CatchLargeUploadMiddleware(BaseHTTPMiddleware):
         async def dispatch(self, request: Request, call_next):
-            # Attempt to catch large uploads
             if "content-length" in request.headers:
                 content_length = int(request.headers["content-length"])
                 max_size = 5 * 1024 * 1024  # 5 MB
@@ -361,14 +330,11 @@ try:
             response = await call_next(request)
             return response
 
-    # Add the middleware to the application
     app.add_middleware(CatchLargeUploadMiddleware)
 
-    # Define a BaseModel for the file upload request
-    class FileUpload(BaseModel):
+    class FileUploadInput(BaseModel):
         file: UploadFile
 
-        # Custom validator to check file format
         @validator("file")
         def check_file_format(cls, v):
             allowed_formats = ["image/png", "image/jpeg", "image/jpg"]
@@ -378,24 +344,37 @@ try:
                 )
             return v
 
+    
+    # **************************       Car Tier Tread API ENDPOINT         **************************
+    class CarTireInput(FileUploadInput):
+        file: UploadFile
+
     @app.post("/tirechecker")
-    async def tirechecker(
-        file: UploadFile = File(...),
-        api_key: str = Depends(check_api_key, use_cache=True),
-    ):
+    async def tire_checker(file_input: CarTireInput = Depends(), api_key: str = Depends(check_api_key, use_cache=True)):
         try:
-            # Read image file
-            contents = await file.read()
-
-            # Preprocess the image
+            contents = await file_input.file.read()
+            # Process car tire analysis using file_input.user_id
+            # Replace the following line with your actual implementation
             result = carTire(contents)
-
-            # Make prediction
-            # result = predict_image(img_array)
-
             return {"result": result}
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+        
+    # **************************       Car Body Pannel Gap API ENDPOINT         **************************
+
+    class CarPanelInput(FileUploadInput):
+        file: UploadFile
+    
+    @app.post("/panelgap")
+    async def panel_gap(panel_input: CarPanelInput = Depends(), api_key: str = Depends(check_api_key)):
+        try:
+            contents = await panel_input.file.read()
+            # Process car panel gap analysis using panel_input.car_id
+            # Replace the following line with your actual implementation
+            # result = process_car_panel_gap(contents, panel_input.car_id)
+            return StreamingResponse(BytesIO(contents), media_type=panel_input.file.content_type)
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
@@ -403,3 +382,5 @@ try:
 
 except Exception as e:
     print(e)
+    
+    
