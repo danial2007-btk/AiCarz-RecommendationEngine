@@ -43,7 +43,22 @@ try:
         print("mongodb disconnected")
 
     app = FastAPI(lifespan=lifespan)
-
+    
+    class CatchLargeUploadMiddleware(BaseHTTPMiddleware):
+        async def dispatch(self, request: Request, call_next):
+            if "content-length" in request.headers:
+                content_length = int(request.headers["content-length"])
+                max_size = 5 * 1024 * 1024  # 5 MB
+                if content_length > max_size:
+                    return JSONResponse(
+                        status_code=413,
+                        content={"message": "Please upload a file of maximum 5 MB."},
+                    )
+            response = await call_next(request)
+            return response
+        
+    app.add_middleware(CatchLargeUploadMiddleware)
+        
     # Base URL for the API
     app.baseURL = "https://aiengine.aicarz.com"
 
@@ -322,22 +337,6 @@ try:
             raise HTTPException(status_code=500, detail="Internal Server Error") from e
  
     # **************************       BODY INPUT FOR API ENDPOINT         **************************
-   
-    class CatchLargeUploadMiddleware(BaseHTTPMiddleware):
-        async def dispatch(self, request: Request, call_next):
-            if "content-length" in request.headers:
-                content_length = int(request.headers["content-length"])
-                max_size = 5 * 1024 * 1024  # 5 MB
-                if content_length > max_size:
-                    return JSONResponse(
-                        status_code=413,
-                        content={"message": "Please upload a file of maximum 5 MB."},
-                    )
-            response = await call_next(request)
-            return response
-
-    app.add_middleware(CatchLargeUploadMiddleware)
-
     class FileUploadInput(BaseModel):
         file: UploadFile
 
