@@ -140,7 +140,7 @@ def FeedManagerMain(user_id, coordinates):
         startTime = time.time()
         # Populating the CAR Objects
         carGets = mainReturn(carIDs)
-
+        print("Total Cars to Display :",len(carGets))
         endTime = time.time()
         print("Time Taken:", endTime - startTime)
         

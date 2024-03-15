@@ -43,7 +43,7 @@ try:
         print("mongodb disconnected")
 
     app = FastAPI(lifespan=lifespan)
-    
+
     class CatchLargeUploadMiddleware(BaseHTTPMiddleware):
         async def dispatch(self, request: Request, call_next):
             if "content-length" in request.headers:
@@ -56,9 +56,9 @@ try:
                     )
             response = await call_next(request)
             return response
-        
+
     app.add_middleware(CatchLargeUploadMiddleware)
-        
+
     # Base URL for the API
     app.baseURL = "https://aiengine.aicarz.com"
 
@@ -71,18 +71,27 @@ try:
             raise HTTPException(status_code=401, detail="Invalid API key")
         return api_key
 
+    # **************************       BODY INPUT FOR API ENDPOINT         **************************
+    class FileUploadInput(BaseModel):
+        file: UploadFile
+
+        @validator("file")
+        def check_file_format(cls, v):
+            allowed_formats = ["image/png", "image/jpeg", "image/jpg"]
+            if v.content_type not in allowed_formats:
+                raise ValueError(
+                    "Invalid file type: Only PNG, JPG, and JPEG are allowed."
+                )
+            return v
+
     # **************************       APP CHECKING         **************************
 
     # Root Endpoint
     @app.get("/")
     def read_root():
         return {"message": "App is running successfully"}
-    
-    #************************** ANTI BANTI SHATI CODE NA CHALA TO **************************
-    
-    @app.get("/root")
-    def read_root():
-        return {"message": "Insan Ban Jaa Code"}
+
+
 
     # **************************       AI SCORE API ENDPOINT         **************************
 
@@ -296,93 +305,83 @@ try:
 
     # **************************       Car AD Checker API ENDPOINT         **************************
 
-    class AdCarIdInput(BaseModel):
-        carid: str  # Car ID as input
+    # class AdCarIdInput(BaseModel):
+    #     carid: str  # Car ID as input
 
-    # car AdChecking API Endpoint
-    # @profile
-    @app.post("/adChecker")
-    async def car_ad_checker(
-        car_data: AdCarIdInput,
-        api_key: str = Depends(check_api_key, use_cache=True),
-    ):
+    # # car AdChecking API Endpoint
+    # # @profile
+    # @app.post("/adChecker")
+    # async def car_ad_checker(
+    #     car_data: AdCarIdInput,
+    #     api_key: str = Depends(check_api_key, use_cache=True),
+    # ):
 
-        # ================== Checking Valid ObjectId for Car ID ==================
+    #     # ================== Checking Valid ObjectId for Car ID ==================
 
-        # Check if car_id is a valid MongoDB ObjectId
-        if not ObjectId.is_valid(car_data.carid):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid car_id. Must be a valid MongoDB ObjectId.",
-            )
+    #     # Check if car_id is a valid MongoDB ObjectId
+    #     if not ObjectId.is_valid(car_data.carid):
+    #         raise HTTPException(
+    #             status_code=status.HTTP_400_BAD_REQUEST,
+    #             detail="Invalid car_id. Must be a valid MongoDB ObjectId.",
+    #         )
 
-        # ======================= Checking if UserID is in Database or not =======================
+    #     # ======================= Checking if UserID is in Database or not =======================
 
-        # Check if user_id exists in the database
-        if not carzcollection.find_one({"_id": ObjectId(car_data.carid)}):
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User Id not found in database.",
-            )
+    #     # Check if user_id exists in the database
+    #     if not carzcollection.find_one({"_id": ObjectId(car_data.carid)}):
+    #         raise HTTPException(
+    #             status_code=status.HTTP_404_NOT_FOUND,
+    #             detail="User Id not found in database.",
+    #         )
 
-        # ======================= Ad Checking =======================
+    #     # ======================= Ad Checking =======================
 
-        try:
-            # car_ad_score = carAdMain(car_data.carid)
-            car_ad_score = dummy(car_data.carid)
-            return car_ad_score
+    #     try:
+    #         # car_ad_score = carAdMain(car_data.carid)
+    #         car_ad_score = dummy(car_data.carid)
+    #         return car_ad_score
 
-        except Exception as e:
-            # Handle exceptions, log them, and return an appropriate response
-            raise HTTPException(status_code=500, detail="Internal Server Error") from e
- 
-    # **************************       BODY INPUT FOR API ENDPOINT         **************************
-    class FileUploadInput(BaseModel):
-        file: UploadFile
+    #     except Exception as e:
+    #         # Handle exceptions, log them, and return an appropriate response
+    #         raise HTTPException(status_code=500, detail="Internal Server Error") from e
 
-        @validator("file")
-        def check_file_format(cls, v):
-            allowed_formats = ["image/png", "image/jpeg", "image/jpg"]
-            if v.content_type not in allowed_formats:
-                raise ValueError(
-                    "Invalid file type: Only PNG, JPG, and JPEG are allowed."
-                )
-            return v
-
-    
     # **************************       Car Tier Tread API ENDPOINT         **************************
-    class CarTireInput(FileUploadInput):
-        file: UploadFile
+    # class CarTireInput(FileUploadInput):
+    #     file: UploadFile
 
-    @app.post("/tirechecker")
-    async def tire_checker(file_input: CarTireInput = Depends(), api_key: str = Depends(check_api_key, use_cache=True)):
-        try:
-            contents = await file_input.file.read()
-            result = carTire(contents)
-            return {"result": result}
-        except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e))
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-        
+    # @app.post("/tirechecker")
+    # async def tire_checker(
+    #     file_input: CarTireInput = Depends(),
+    #     api_key: str = Depends(check_api_key, use_cache=True),
+    # ):
+    #     try:
+    #         contents = await file_input.file.read()
+    #         result = carTire(contents)
+    #         return {"result": result}
+    #     except ValueError as e:
+    #         raise HTTPException(status_code=400, detail=str(e))
+    #     except Exception as e:
+    #         raise HTTPException(status_code=500, detail=str(e))
+
     # **************************       Car Body Pannel Gap API ENDPOINT         **************************
 
-    class CarPanelInput(FileUploadInput):
-        file: UploadFile
-    
-    @app.post("/panelgap")
-    async def panel_gap(panel_input: CarPanelInput = Depends(), api_key: str = Depends(check_api_key)):
-        try:
-            contents = await panel_input.file.read()
-            # Process car panel gap analysis using panel_input.car_id
-            # Replace the following line with your actual implementation
-            # result = process_car_panel_gap(contents, panel_input.car_id)
-            return StreamingResponse(BytesIO(contents), media_type=panel_input.file.content_type)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+    # class CarPanelInput(FileUploadInput):
+    #     file: UploadFile
 
+    # @app.post("/panelgap")
+    # async def panel_gap(
+    #     panel_input: CarPanelInput = Depends(), api_key: str = Depends(check_api_key)
+    # ):
+    #     try:
+    #         contents = await panel_input.file.read()
+    #         # Process car panel gap analysis using panel_input.car_id
+    #         # Replace the following line with your actual implementation
+    #         # result = process_car_panel_gap(contents, panel_input.car_id)
+    #         return StreamingResponse(
+    #             BytesIO(contents), media_type=panel_input.file.content_type
+    #         )
+    #     except Exception as e:
+    #         raise HTTPException(status_code=500, detail=str(e))
 
 except Exception as e:
     print(e)
-    
-    
