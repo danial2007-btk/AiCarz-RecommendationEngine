@@ -78,16 +78,16 @@ def load_car_profiles_from_mongodb(user_id, user_coordinates):
                 },
                 "distanceField": "distance",
                 "spherical": True,
-                "maxDistance": 500 * 1000,  # in meters
+                "maxDistance": 500 * 1000,  # in-meters
                 "query": {
+                    "isActive": True,
                     "likes": {"$nin": [ObjectId(user_id)]},
                     "dislikes": {"$nin": [ObjectId(user_id)]},
-                    "isActive": True,
                 },
             },
         },
         {
-            "$limit": 3000,
+            "$limit": 500,
         },
         {
             "$project": {
@@ -117,10 +117,11 @@ def load_car_profiles_from_mongodb(user_id, user_coordinates):
             },
         },
     ]
+
     try:
         # Execute the pipeline
         result = collection.aggregate(pipeline)
-
+        
         endTime = time.time()
         print("Time taken to load car profiles from MongoDB: ", endTime - startTime)
 
