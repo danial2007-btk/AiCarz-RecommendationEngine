@@ -119,6 +119,12 @@ def load_car_profiles_from_mongodb(user_id, user_coordinates):
     ]
 
     try:
+        # Execute explain on the aggregation pipeline
+        # explain_result = carzdb.command('aggregate', collection.name, pipeline=pipeline, explain=True)
+
+        # # Print execution statistics
+        # print(explain_result['serverParameters'])
+
         # Execute the pipeline
         result = collection.aggregate(pipeline)
         
