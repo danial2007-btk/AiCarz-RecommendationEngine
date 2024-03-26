@@ -20,11 +20,6 @@ from bson import ObjectId
 
 from main import AiScoreMain, FeedManagerMain, modelStatsMain, LikeandDislikecount
 
-# from adStatus import carAdMain
-
-from adStatus import dummy  # Rempve This
-from dummyFunction import carTire  # Remove This
-
 from mongodb import mongodbConn, carzcollection, usercollection
 
 # from memory_profiler import profile
