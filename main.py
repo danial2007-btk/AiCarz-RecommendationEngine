@@ -193,7 +193,10 @@ def LikeandDislikecount(userId, coordinates):
             #load User Dislike History
             userDislike = get_car_profiles_by_user_dislike(userId)
             
-            return {"len of like Cars":len(userLike),"len of Dislike Cars":len(userDislike), "userLike":userLike, "userDislike":userDislike}
+            #total count of swipes
+            totalCount  = len(userLike) + len(userDislike)
+            
+            return {"Total Count of Swipes":(totalCount),"len of like Cars":len(userLike),"len of Dislike Cars":len(userDislike), "userLike":userLike, "userDislike":userDislike}
             
         except Exception as e:
             print("Exception in LikeandDislikecount Function:", e)
