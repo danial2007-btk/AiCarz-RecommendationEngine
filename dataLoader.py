@@ -2,9 +2,10 @@ from bson import ObjectId
 import time
 
 from AiScore import AIScoreInput
-from mongodb import mongodbConn, carzcollection, carzdb
+from mongodb import carzcollection, usercollection
 
 collection = carzcollection
+usercollection = usercollection
 
 # # Set up logging
 # logging.basicConfig(level=logging.INFO)
@@ -81,6 +82,8 @@ def load_car_profiles_from_mongodb(user_id, user_coordinates):
                 "maxDistance": 500 * 1000,  # in-meters
                 "query": {
                     "isActive": True,
+                    'adStatus': 'Approved',
+                    # 'authorId': {'$ne': None},
                     "likes": {"$nin": [ObjectId(user_id)]},
                     "dislikes": {"$nin": [ObjectId(user_id)]},
                 },
@@ -119,12 +122,6 @@ def load_car_profiles_from_mongodb(user_id, user_coordinates):
     ]
 
     try:
-        # Execute explain on the aggregation pipeline
-        # explain_result = carzdb.command('aggregate', collection.name, pipeline=pipeline, explain=True)
-
-        # # Print execution statistics
-        # print(explain_result['serverParameters'])
-
         # Execute the pipeline
         result = collection.aggregate(pipeline)
         
@@ -334,7 +331,8 @@ def mainReturn(carIds):
         # Fetch the data
         result = list(collection.find(query))
         # print(result)
-
+        userProfile = None
+         
         for item in result:
             car_id = str(item.get("_id", ""))
             make = item.get("make", None)
@@ -355,6 +353,22 @@ def mainReturn(carIds):
             cityName = item.get("cityName", None)
             fuelConsumptionInMPG = item.get("fuelConsumptionInMPG", None)
             isActive = item.get("isActive", None)
+            authorId = item.get("authorId",None)
+            
+            # Populate the authorId
+            if authorId is not None and authorId != {}:
+                # print("authorId:",authorId)
+                user = usercollection.find({"_id":ObjectId(authorId)})
+                # print("user:",user)
+                if user:
+                    for userItem in user:
+                        userProfile['_id'] = userItem.get("_id",None)
+                        userProfile['profilePhoto'] = userItem.get("profilePhoto",None)
+                        userProfile['firstName'] = userItem.get("firstName",None)
+                        userProfile['lastName'] = userItem.get("lastName",None)
+                        userProfile['email'] = userItem.get("email",None)
+                        userProfile['phone'] = userItem.get("phone",None)
+
 
             # Check for the existence of the 'location' field
             location_data = item.get("location")
@@ -382,6 +396,7 @@ def mainReturn(carIds):
                 "gearbox": gearbox,
                 "price": price,
                 "currency": currency,
+                "authorId":userProfile,
                 "description": description,
                 "isActive": isActive,
                 "location": (
@@ -392,6 +407,8 @@ def mainReturn(carIds):
                 "fuelConsumptionInMPG": fuelConsumptionInMPG,
             }
 
+            # print("Car Profile: ",car_profile)
+            
             car_profiles.append(car_profile)
 
         return car_profiles

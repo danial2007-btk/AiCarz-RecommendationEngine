@@ -77,7 +77,8 @@ def FeedManagerMain(user_id, coordinates):
     try:
         # load Car Objects from the MongoDB
         carData = load_car_profiles_from_mongodb(user_id, coordinates)
-
+        # print(carData)
+        
         # Load User Like History
         userLike = get_car_profiles_by_user_like(user_id)   
         # print("UserLike",userLike)
@@ -115,7 +116,7 @@ def FeedManagerMain(user_id, coordinates):
             # Initialize the final carIDs list
             carIDs = []
 
-            # Iterate through combinedRecommendations and feedCar in a single loop
+            # Iterate through combined Recommendations and feedCar in a single loop
             for carID in combinedRecommendations + feedCar:
                 if carID not in uniqueCarIDs:
                     carIDs.append(carID)
@@ -138,12 +139,13 @@ def FeedManagerMain(user_id, coordinates):
             print("Time for getting carsID:", endTime - startTime)
                 
         startTime = time.time()
+        
         # Populating the CAR Objects
         carGets = mainReturn(carIDs)
         print("Total Cars to Display :",len(carGets))
         endTime = time.time()
         print("Time Taken:", endTime - startTime)
-        
+        # print("carGets", carGets)
         return carGets
 
     except Exception as e:

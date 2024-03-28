@@ -8,10 +8,12 @@ from fastapi import (
     UploadFile,
     Request,
 )
-from fastapi.responses import StreamingResponse
+# import json
+# from fastapi.responses import StreamingResponse
+from fastapi.encoders import jsonable_encoder
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
-from io import BytesIO
+# from io import BytesIO
 
 
 from contextlib import asynccontextmanager
@@ -190,6 +192,9 @@ try:
 
             # Function named FeedManagerMain that takes a car_id and coordinates as input
             carIds_ouput = FeedManagerMain(feed_data.user_id, coordinates)
+            
+            # Serialize the output data to JSON
+            # carIds_json = jsonable_encoder(carIds_ouput)
 
             return carIds_ouput
 
