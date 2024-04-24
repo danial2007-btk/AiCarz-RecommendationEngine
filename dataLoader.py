@@ -100,18 +100,27 @@ def load_car_profiles_from_mongodb(user_id, user_coordinates):
                 "engineSizeInLiter": 1,
                 "gearbox": 1,
                 "price": 1,
-                "lastAiScore": 1,
-            },
-        },
-        {
-            "$addFields": {
-                "lastAiScore": {"$arrayElemAt": ["$AiScore", -1]},
+                "lastAiScore": {
+                    "$arrayElemAt" : ["$AiScore", -1],
+                }
             },
         },
         # {
+        #     "$addFields": {
+        #         "lastAiScore": {"$arrayElemAt": ["$AiScore", -1]},
+        #     },
+        # },
+        # {
         #     "$match": {
-        #         "carImages": {"$exists": True},
-        #         "$expr": {"$gt": [{"$size": {"$ifNull": ["$carImages", []]}}, 1]},
+        #         # "carImages": {"$exists": True},
+        #         # "$expr": {"$gt": [{"$size": {"$ifNull": ["$carImages", []]}}, 1]},
+        #         "make": {"$ne": None},
+        #         "fuelType": {"$ne": None},
+        #         "bodyType": {"$ne": None},
+        #         "engineSizeInLiter": {"$ne": None},
+        #         "gearbox": {"$ne": None},
+        #         "price": {"$ne": None},
+        #         "lastAiScore": {"$ne": None},
         #     }
         # },
         {
@@ -151,7 +160,7 @@ def load_car_profiles_from_mongodb(user_id, user_coordinates):
             }
 
             car_profiles.append(car_profile)
-
+        
         return car_profiles
 
     except Exception as e:
