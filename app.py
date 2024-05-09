@@ -3,14 +3,12 @@ from fastapi import (
     HTTPException,
     Depends,
     Query,
-    status,
-    File,
-    UploadFile,
-    Request,
+    status
 )
 
+import psutil
 from contextlib import asynccontextmanager
-from pydantic import BaseModel, validator
+from pydantic import BaseModel
 from bson import ObjectId
 
 from main import AiScoreMain, FeedManagerMain, modelStatsMain, LikeandDislikecount
@@ -33,6 +31,25 @@ try:
         print("mongodb disconnected")
 
     app = FastAPI(lifespan=lifespan)
+    
+    @app.middleware("http")
+    async def monitor_usage(request, call_next):
+        cpu_percent = psutil.cpu_percent()
+        cpu_consumption = psutil.cpu_percent(interval=None, percpu=True)
+        
+        ram_usage = psutil.virtual_memory().percent
+        ram_consumption = psutil.virtual_memory().used / (1024 * 1024)  # in MB
+        
+        # Log or store the CPU and RAM usage metrics
+        print(f"CPU Usage: {cpu_percent}%")
+        print("CPU Consumption:")
+        for i, core in enumerate(cpu_consumption):
+            print(f"    Core {i+1}: {core}%")
+        print(f"RAM Usage: {ram_usage}%")
+        print(f"RAM Consumption: {ram_consumption:.2f} MB")
+        
+        response = await call_next(request)
+        return response
 
     # Base URL for the API
     app.baseURL = "https://aiengine.aicarz.com"
@@ -53,6 +70,18 @@ try:
     @app.get("/")
     def read_root():
         return {"message": "App is running successfully"}
+
+   # ****************************    USAGE MEMORY MONITIORING API ENDPOINT *************************
+   
+    # # Expose endpoint for CPU usage
+    # @app.get("/metrics/cpu")
+    # async def get_cpu_usage():
+    #     return {"cpu_percent": psutil.cpu_percent()}
+
+    # # Expose endpoint for RAM usage
+    # @app.get("/metrics/ram")
+    # async def get_ram_usage():
+    #     return {"ram_percent": psutil.virtual_memory().percent}
 
     # **************************       AI SCORE API ENDPOINT         **************************
 

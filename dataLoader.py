@@ -161,6 +161,8 @@ def load_car_profiles_from_mongodb(user_id, user_coordinates):
 
             car_profiles.append(car_profile)
         
+        # print(car_profiles)
+
         return car_profiles
 
     except Exception as e:
