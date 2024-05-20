@@ -1,14 +1,11 @@
-from fastapi import (
-    FastAPI,
-    HTTPException,
-    Depends,
-    Query,
-    status
-)
-
+from fastapi import FastAPI, HTTPException, Depends, Query, status
+from fastapi_limiter import FastAPILimiter
+from fastapi_limiter.depends import RateLimiter
 import psutil
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
+from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 from bson import ObjectId
 
 from main import AiScoreMain, FeedManagerMain, modelStatsMain, LikeandDislikecount
@@ -31,15 +28,17 @@ try:
         print("mongodb disconnected")
 
     app = FastAPI(lifespan=lifespan)
-    
+
+    geolocator = Nominatim(user_agent="geoapiExercises")
+
     @app.middleware("http")
     async def monitor_usage(request, call_next):
         cpu_percent = psutil.cpu_percent()
         cpu_consumption = psutil.cpu_percent(interval=None, percpu=True)
-        
+
         ram_usage = psutil.virtual_memory().percent
         ram_consumption = psutil.virtual_memory().used / (1024 * 1024)  # in MB
-        
+
         # Log or store the CPU and RAM usage metrics
         print(f"CPU Usage: {cpu_percent}%")
         print("CPU Consumption:")
@@ -47,7 +46,7 @@ try:
             print(f"    Core {i+1}: {core}%")
         print(f"RAM Usage: {ram_usage}%")
         print(f"RAM Consumption: {ram_consumption:.2f} MB")
-        
+
         response = await call_next(request)
         return response
 
@@ -63,25 +62,12 @@ try:
             raise HTTPException(status_code=401, detail="Invalid API key")
         return api_key
 
-    
     # **************************       APP CHECKING         **************************
 
     # Root Endpoint
     @app.get("/")
     def read_root():
         return {"message": "App is running successfully"}
-
-   # ****************************    USAGE MEMORY MONITIORING API ENDPOINT *************************
-   
-    # # Expose endpoint for CPU usage
-    # @app.get("/metrics/cpu")
-    # async def get_cpu_usage():
-    #     return {"cpu_percent": psutil.cpu_percent()}
-
-    # # Expose endpoint for RAM usage
-    # @app.get("/metrics/ram")
-    # async def get_ram_usage():
-    #     return {"ram_percent": psutil.virtual_memory().percent}
 
     # **************************       AI SCORE API ENDPOINT         **************************
 
@@ -90,7 +76,7 @@ try:
 
     # Ai Score API Endpoint
     # @profile
-    @app.post("/aiscore")
+    @app.post("/aiscore", dependencies=[Depends(RateLimiter())])
     async def calculate_ai_score(
         car_data: CarIdInput,
         api_key: str = Depends(check_api_key, use_cache=True),
@@ -146,7 +132,7 @@ try:
         if not usercollection.find_one({"_id": ObjectId(feed_data.user_id)}):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="User Id not found in database .",
+                detail="User Id not found in database.",
             )
 
         # ===================== Validating the Longitude and Latitude is empty or not =====================
@@ -158,42 +144,50 @@ try:
                 detail="Longitude and latitude are required fields.",
             )
 
-        # ===================== Validating the Longitude and Latitude is empty or not =====================
+        # ===================== Validating the Longitude and Latitude is correct =====================
 
+        # try:
         # Validate longitude and latitude input data
-        try:
-            longitude = float(feed_data.longitude)
-            latitude = float(feed_data.latitude)
+        longitude = float(feed_data.longitude)
+        latitude = float(feed_data.latitude)
 
-            # Check if longitude is in the valid range [-180, 180]
-            if not (-180 <= longitude <= 180):
-                raise ValueError("Longitude format is invalid.")
-
-            # Check if latitude is in the valid range [-90, 90]
-            if not (-90 <= latitude <= 90):
-                raise ValueError("Latitude format is invalid.")
-
-        except ValueError:
+        # Check if longitude is in the valid range [-180, 180]
+        if not (-180 <= longitude <= 180):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid longitude or latitude format.",
+                detail="Longitude format is invalid.",
             )
 
-        try:
+        # Check if latitude is in the valid range [-90, 90]
+        if not (-90 <= latitude <= 90):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Latitude format is invalid.",
+            )
+            
+        location = geolocator.reverse(
+            (latitude, longitude), exactly_one=True
+        )
+        
+        print("LOCATION:", location)
+        
+        if location and "United Kingdom" not in location.address:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Coordinates must be within the UK boundary.")
 
+        try:
             coordinates = [feed_data.longitude, feed_data.latitude]
 
-            # Function named FeedManagerMain that takes a car_id and coordinates as input
-            carIds_ouput = FeedManagerMain(feed_data.user_id, coordinates)
-            
-            # Serialize the output data to JSON
-            # carIds_json = jsonable_encoder(carIds_ouput)
+            # Function named FeedManagerMain that takes a user_id and coordinates as input
+            carIds_output = FeedManagerMain(feed_data.user_id, coordinates)
 
-            return carIds_ouput
+            return carIds_output
 
         except Exception as e:
             # Handle exceptions, log them, and return an appropriate response
-            raise HTTPException(status_code=500, detail=e)
+            raise HTTPException(status_code=500, detail=str(e))
+
 
     # **************************       Model Stats API ENDPOINT         **************************
 
@@ -201,7 +195,7 @@ try:
     class modelStatsInput(BaseModel):
         user_id: str  # User ID as input
 
-    @app.post("/modelStats")
+    @app.post("/modelStats", dependencies=[Depends(RateLimiter())])
     async def modelStats(
         modelstats: modelStatsInput,
         api_key: str = Depends(check_api_key, use_cache=True),
@@ -224,7 +218,7 @@ try:
         longitude: float  # User longitude: float
         latitude: float  # User latitude: float
 
-    @app.post("/likeanddislikecount")
+    @app.post("/likeanddislikecount", dependencies=[Depends(RateLimiter())])
     async def likeanddislikecount(
         likeanddislikecount_data: LikeandDislikecountInput,
         api_key: str = Depends(check_api_key, use_cache=True),
