@@ -200,7 +200,7 @@ def get_car_profiles_by_user_like(userId):
         result = collection.aggregate(pipeline)
 
         endTime = time.time()
-        print("Time taken to load car profiles from MongoDB: ", endTime - startTime)
+        print("Time taken to load car profiles of User Likes from MongoDB: ", endTime - startTime)
 
         # Extract relevant information from MongoDB query results
         car_profiles = []
@@ -263,7 +263,7 @@ def get_car_profiles_by_user_dislike(userId):
         result = collection.aggregate(pipeline)
 
         endTime = time.time()
-        print("Time taken to load car profiles from MongoDB: ", endTime - startTime)
+        print("Time taken to load car profiles of User Dislikes from MongoDB: ", endTime - startTime)
 
         # Extract relevant information from MongoDB query results
         car_profiles = []
