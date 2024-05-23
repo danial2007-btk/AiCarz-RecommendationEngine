@@ -56,7 +56,7 @@ def get_top_n_recommendations(user_id, car_data, user_preference_data, user_inte
 
         # Make predictions using collaborative filtering
         predictions = [model.predict(user_id, car_id).est for car_id in car_ids_to_recommend]
-
+        # print("Model Prediction: ",predictions)
     
         # Combine predictions from collaborative and content-based models with adjusted weights
         collaborative_predictions = [model.predict(user_id, car_id).est for car_id in car_ids_to_recommend]
@@ -69,6 +69,7 @@ def get_top_n_recommendations(user_id, car_data, user_preference_data, user_inte
         max_prediction = max(hybrid_predictions)
         min_prediction = min(hybrid_predictions)
         normalized_predictions = [(pred - min_prediction) / (max_prediction - min_prediction) for pred in hybrid_predictions]
+        # print("normalized_predictions:",normalized_predictions)
 
         # Get indices of top N recommendations
         top_indices = sorted(range(len(normalized_predictions)), key=lambda i: normalized_predictions[i], reverse=True)[:20]

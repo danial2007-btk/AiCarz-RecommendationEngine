@@ -4,10 +4,9 @@ from fastapi_limiter.depends import RateLimiter
 import psutil
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
-from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 from bson import ObjectId
 
+from uk_boundary import is_within_uk_boundary
 from main import AiScoreMain, FeedManagerMain, modelStatsMain, LikeandDislikecount
 
 from mongodb import mongodbConn, usercollection
@@ -28,8 +27,6 @@ try:
         print("mongodb disconnected")
 
     app = FastAPI(lifespan=lifespan)
-
-    geolocator = Nominatim(user_agent="geoapiExercises")
 
     @app.middleware("http")
     async def monitor_usage(request, call_next):
@@ -76,7 +73,7 @@ try:
 
     # Ai Score API Endpoint
     # @profile
-    @app.post("/aiscore", dependencies=[Depends(RateLimiter())])
+    @app.post("/aiscore")
     async def calculate_ai_score(
         car_data: CarIdInput,
         api_key: str = Depends(check_api_key, use_cache=True),
@@ -164,14 +161,12 @@ try:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Latitude format is invalid.",
             )
-            
-        location = geolocator.reverse(
-            (latitude, longitude), exactly_one=True
-        )
+        
+        location = is_within_uk_boundary(latitude,longitude)
         
         print("LOCATION:", location)
         
-        if location and "United Kingdom" not in location.address:
+        if location is not True:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Coordinates must be within the UK boundary.")
@@ -188,14 +183,13 @@ try:
             # Handle exceptions, log them, and return an appropriate response
             raise HTTPException(status_code=500, detail=str(e))
 
-
     # **************************       Model Stats API ENDPOINT         **************************
 
     # Model Stats Endpoint
     class modelStatsInput(BaseModel):
         user_id: str  # User ID as input
 
-    @app.post("/modelStats", dependencies=[Depends(RateLimiter())])
+    @app.post("/modelStats")
     async def modelStats(
         modelstats: modelStatsInput,
         api_key: str = Depends(check_api_key, use_cache=True),
@@ -218,7 +212,7 @@ try:
         longitude: float  # User longitude: float
         latitude: float  # User latitude: float
 
-    @app.post("/likeanddislikecount", dependencies=[Depends(RateLimiter())])
+    @app.post("/likeanddislikecount")
     async def likeanddislikecount(
         likeanddislikecount_data: LikeandDislikecountInput,
         api_key: str = Depends(check_api_key, use_cache=True),
