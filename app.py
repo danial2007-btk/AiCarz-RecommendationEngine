@@ -167,9 +167,8 @@ try:
         print("LOCATION:", location)
         
         if location is not True:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Coordinates must be within the UK boundary.")
+            return [{"message": "LOCATION_OUT_OF_UK_BOUNDARY",
+                    "errorCode": "LOCATION_OUT_OF_UK_BOUNDARY"}]
 
         try:
             coordinates = [feed_data.longitude, feed_data.latitude]
