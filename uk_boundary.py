@@ -19,5 +19,5 @@ def is_within_uk_boundary(lat, lon):
     return uk_boundary.contains(location)
 
 # Example usage:
-print(is_within_uk_boundary(53.70490479524998, -1.3740088233097907))  # True for within the UK
-print(is_within_uk_boundary(40.712776, -74.005974)) # False for Outside of UK
+# print(is_within_uk_boundary(53.70490479524998, -1.3740088233097907))  # True for within the UK
+# print(is_within_uk_boundary(40.712776, -74.005974)) # False for Outside of UK
