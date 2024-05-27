@@ -167,8 +167,9 @@ try:
         print("LOCATION:", location)
         
         if location is not True:
-            return [{"message": "LOCATION_OUT_OF_UK_BOUNDARY",
-                    "errorCode": "LOCATION_OUT_OF_UK_BOUNDARY"}]
+            return {"message": "location must be inside UK",
+                     "data": [],
+                    "errorCode": "LOCATION_OUT_OF_UK_BOUNDARY"}
 
         try:
             coordinates = [feed_data.longitude, feed_data.latitude]
@@ -176,7 +177,9 @@ try:
             # Function named FeedManagerMain that takes a user_id and coordinates as input
             carIds_output = FeedManagerMain(feed_data.user_id, coordinates)
 
-            return carIds_output
+            return {"message": "Feed response",
+                     "data": carIds_output,
+                    "errorCode": "SUCCESS"}
 
         except Exception as e:
             # Handle exceptions, log them, and return an appropriate response
