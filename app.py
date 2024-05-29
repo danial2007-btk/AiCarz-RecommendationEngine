@@ -118,28 +118,25 @@ try:
 
         # Check if user_id is a valid MongoDB ObjectId
         if not ObjectId.is_valid(feed_data.user_id):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid user_id. Must be a valid MongoDB ObjectId.",
-            )
+            return {"message": "Invalid user_id. Must be a valid MongoDB ObjectId.",
+                     "data": [],
+                    "errorCode": "USER_IS_NOT_VALID"}
 
         # ======================= Checking if UserID is in Database or not =======================
 
         # Check if user_id exists in the database
         if not usercollection.find_one({"_id": ObjectId(feed_data.user_id)}):
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User Id not found in database.",
-            )
+            return {"message": "User Id not found in Database",
+                     "data": [],
+                    "errorCode": "USER_NOT_FOUND"}
 
         # ===================== Validating the Longitude and Latitude is empty or not =====================
 
         # Validate input data
         if not feed_data.longitude or not feed_data.latitude:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Longitude and latitude are required fields.",
-            )
+            return {"message": "Longitude and latitude are required fields.",
+                     "data": [],
+                    "errorCode": "REQUIRED_PARAMETER_IS_MISSING"}
 
         # ===================== Validating the Longitude and Latitude is correct =====================
 
@@ -150,17 +147,15 @@ try:
 
         # Check if longitude is in the valid range [-180, 180]
         if not (-180 <= longitude <= 180):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Longitude format is invalid.",
-            )
+            return {"message": "Longitude format is invalid",
+                     "data": [],
+                    "errorCode": "LONGITUTDE_FORMAT_IS_INVALID"}
 
         # Check if latitude is in the valid range [-90, 90]
         if not (-90 <= latitude <= 90):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Latitude format is invalid.",
-            )
+            return {"message": "Latitude format is invalid",
+                     "data": [],
+                    "errorCode": "LATITUDE_FORMAT_IS_INVALID"}
         
         location = is_within_uk_boundary(latitude,longitude)
         
