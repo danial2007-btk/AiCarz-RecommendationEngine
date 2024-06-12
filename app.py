@@ -134,9 +134,9 @@ try:
 
         # Validate input data
         if not feed_data.longitude or not feed_data.latitude:
-            return {"message": "Longitude and latitude are required fields.",
+            return {"message": "location must be inside UK",
                      "data": [],
-                    "errorCode": "REQUIRED_PARAMETER_IS_MISSING"}
+                    "errorCode": "LOCATION_OUT_OF_UK_BOUNDARY"}
 
         # ===================== Validating the Longitude and Latitude is correct =====================
 
