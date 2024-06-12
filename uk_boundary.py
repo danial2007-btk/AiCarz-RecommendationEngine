@@ -3,7 +3,7 @@ from shapely.geometry import Point, Polygon
 def is_within_uk_boundary(lat, lon):
     # Define the boundary coordinates
     boundary_coords = [
-        (55.730067550872946, -6.044843416651095),
+        (55.37361427693727, -5.985222911351597),
         (56.39978492636089, 1.8465272521310225),
         (49.6685956318405, -5.987414410408748),
         (51.02335540643392, 1.90362796372173)
