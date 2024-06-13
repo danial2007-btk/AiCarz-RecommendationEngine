@@ -41,6 +41,7 @@ try:
         print("xxxxxxxx   shurting down event")
         mongodbConn.close()
         print("mongodb disconnected")
+        print("just change")
 
     app = FastAPI(lifespan=lifespan)
 
