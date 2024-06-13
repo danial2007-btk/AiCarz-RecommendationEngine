@@ -1,31 +1,15 @@
-from fastapi import (
-    FastAPI,
-    HTTPException,
-    Depends,
-    Query,
-    status,
-    File,
-    UploadFile,
-    Request,
-)
-from fastapi.responses import StreamingResponse
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import JSONResponse
-from io import BytesIO
-
-
+from fastapi import FastAPI, HTTPException, Depends, Query, status
+from fastapi_limiter import FastAPILimiter
+from fastapi_limiter.depends import RateLimiter
+import psutil
 from contextlib import asynccontextmanager
-from pydantic import BaseModel, validator
+from pydantic import BaseModel
 from bson import ObjectId
 
+from uk_boundary import is_within_uk_boundary
 from main import AiScoreMain, FeedManagerMain, modelStatsMain, LikeandDislikecount
 
-# from adStatus import carAdMain
-
-from adStatus import dummy  # Rempve This
-from dummyFunction import carTire  # Remove This
-
-from mongodb import mongodbConn, carzcollection, usercollection
+from mongodb import mongodbConn, usercollection
 
 # from memory_profiler import profile
 
@@ -44,20 +28,24 @@ try:
 
     app = FastAPI(lifespan=lifespan)
 
-    class CatchLargeUploadMiddleware(BaseHTTPMiddleware):
-        async def dispatch(self, request: Request, call_next):
-            if "content-length" in request.headers:
-                content_length = int(request.headers["content-length"])
-                max_size = 5 * 1024 * 1024  # 5 MB
-                if content_length > max_size:
-                    return JSONResponse(
-                        status_code=413,
-                        content={"message": "Please upload a file of maximum 5 MB."},
-                    )
-            response = await call_next(request)
-            return response
+    @app.middleware("http")
+    async def monitor_usage(request, call_next):
+        cpu_percent = psutil.cpu_percent()
+        cpu_consumption = psutil.cpu_percent(interval=None, percpu=True)
 
-    app.add_middleware(CatchLargeUploadMiddleware)
+        ram_usage = psutil.virtual_memory().percent
+        ram_consumption = psutil.virtual_memory().used / (1024 * 1024)  # in MB
+
+        # Log or store the CPU and RAM usage metrics
+        print(f"CPU Usage: {cpu_percent}%")
+        print("CPU Consumption:")
+        for i, core in enumerate(cpu_consumption):
+            print(f"    Core {i+1}: {core}%")
+        print(f"RAM Usage: {ram_usage}%")
+        print(f"RAM Consumption: {ram_consumption:.2f} MB")
+
+        response = await call_next(request)
+        return response
 
     # Base URL for the API
     app.baseURL = "https://aiengine.aicarz.com"
@@ -71,27 +59,12 @@ try:
             raise HTTPException(status_code=401, detail="Invalid API key")
         return api_key
 
-    # **************************       BODY INPUT FOR API ENDPOINT         **************************
-    class FileUploadInput(BaseModel):
-        file: UploadFile
-
-        @validator("file")
-        def check_file_format(cls, v):
-            allowed_formats = ["image/png", "image/jpeg", "image/jpg"]
-            if v.content_type not in allowed_formats:
-                raise ValueError(
-                    "Invalid file type: Only PNG, JPG, and JPEG are allowed."
-                )
-            return v
-
     # **************************       APP CHECKING         **************************
 
     # Root Endpoint
     @app.get("/")
     def read_root():
         return {"message": "App is running successfully"}
-
-
 
     # **************************       AI SCORE API ENDPOINT         **************************
 
@@ -145,62 +118,67 @@ try:
 
         # Check if user_id is a valid MongoDB ObjectId
         if not ObjectId.is_valid(feed_data.user_id):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid user_id. Must be a valid MongoDB ObjectId.",
-            )
+            return {"message": "Invalid user_id. Must be a valid MongoDB ObjectId.",
+                     "data": [],
+                    "errorCode": "USER_IS_NOT_VALID"}
 
         # ======================= Checking if UserID is in Database or not =======================
 
         # Check if user_id exists in the database
         if not usercollection.find_one({"_id": ObjectId(feed_data.user_id)}):
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User Id not found in database .",
-            )
+            return {"message": "User Id not found in Database",
+                     "data": [],
+                    "errorCode": "USER_NOT_FOUND"}
 
         # ===================== Validating the Longitude and Latitude is empty or not =====================
 
         # Validate input data
         if not feed_data.longitude or not feed_data.latitude:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Longitude and latitude are required fields.",
-            )
+            return {"message": "location must be inside UK",
+                     "data": [],
+                    "errorCode": "LOCATION_OUT_OF_UK_BOUNDARY"}
 
-        # ===================== Validating the Longitude and Latitude is empty or not =====================
+        # ===================== Validating the Longitude and Latitude is correct =====================
 
+        # try:
         # Validate longitude and latitude input data
+        longitude = float(feed_data.longitude)
+        latitude = float(feed_data.latitude)
+
+        # Check if longitude is in the valid range [-180, 180]
+        if not (-180 <= longitude <= 180):
+            return {"message": "Longitude format is invalid",
+                     "data": [],
+                    "errorCode": "LONGITUTDE_FORMAT_IS_INVALID"}
+
+        # Check if latitude is in the valid range [-90, 90]
+        if not (-90 <= latitude <= 90):
+            return {"message": "Latitude format is invalid",
+                     "data": [],
+                    "errorCode": "LATITUDE_FORMAT_IS_INVALID"}
+        
+        location = is_within_uk_boundary(latitude,longitude)
+        
+        print("LOCATION:", location)
+        
+        if location is not True:
+            return {"message": "location must be inside UK",
+                     "data": [],
+                    "errorCode": "LOCATION_OUT_OF_UK_BOUNDARY"}
+
         try:
-            longitude = float(feed_data.longitude)
-            latitude = float(feed_data.latitude)
-
-            # Check if longitude is in the valid range [-180, 180]
-            if not (-180 <= longitude <= 180):
-                raise ValueError("Longitude format is invalid.")
-
-            # Check if latitude is in the valid range [-90, 90]
-            if not (-90 <= latitude <= 90):
-                raise ValueError("Latitude format is invalid.")
-
-        except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid longitude or latitude format.",
-            )
-
-        try:
-
             coordinates = [feed_data.longitude, feed_data.latitude]
 
-            # Function named FeedManagerMain that takes a car_id and coordinates as input
-            carIds_ouput = FeedManagerMain(feed_data.user_id, coordinates)
+            # Function named FeedManagerMain that takes a user_id and coordinates as input
+            carIds_output = FeedManagerMain(feed_data.user_id, coordinates)
 
-            return carIds_ouput
+            return {"message": "Feed response",
+                     "data": carIds_output,
+                    "errorCode": "SUCCESS"}
 
         except Exception as e:
             # Handle exceptions, log them, and return an appropriate response
-            raise HTTPException(status_code=500, detail=e)
+            raise HTTPException(status_code=500, detail=str(e))
 
     # **************************       Model Stats API ENDPOINT         **************************
 
@@ -302,86 +280,6 @@ try:
         except Exception as e:
             # Handle exceptions, log them, and return an appropriate response
             raise HTTPException(status_code=500, detail=e)
-
-    # **************************       Car AD Checker API ENDPOINT         **************************
-
-    # class AdCarIdInput(BaseModel):
-    #     carid: str  # Car ID as input
-
-    # # car AdChecking API Endpoint
-    # # @profile
-    # @app.post("/adChecker")
-    # async def car_ad_checker(
-    #     car_data: AdCarIdInput,
-    #     api_key: str = Depends(check_api_key, use_cache=True),
-    # ):
-
-    #     # ================== Checking Valid ObjectId for Car ID ==================
-
-    #     # Check if car_id is a valid MongoDB ObjectId
-    #     if not ObjectId.is_valid(car_data.carid):
-    #         raise HTTPException(
-    #             status_code=status.HTTP_400_BAD_REQUEST,
-    #             detail="Invalid car_id. Must be a valid MongoDB ObjectId.",
-    #         )
-
-    #     # ======================= Checking if UserID is in Database or not =======================
-
-    #     # Check if user_id exists in the database
-    #     if not carzcollection.find_one({"_id": ObjectId(car_data.carid)}):
-    #         raise HTTPException(
-    #             status_code=status.HTTP_404_NOT_FOUND,
-    #             detail="User Id not found in database.",
-    #         )
-
-    #     # ======================= Ad Checking =======================
-
-    #     try:
-    #         # car_ad_score = carAdMain(car_data.carid)
-    #         car_ad_score = dummy(car_data.carid)
-    #         return car_ad_score
-
-    #     except Exception as e:
-    #         # Handle exceptions, log them, and return an appropriate response
-    #         raise HTTPException(status_code=500, detail="Internal Server Error") from e
-
-    # **************************       Car Tier Tread API ENDPOINT         **************************
-    # class CarTireInput(FileUploadInput):
-    #     file: UploadFile
-
-    # @app.post("/tirechecker")
-    # async def tire_checker(
-    #     file_input: CarTireInput = Depends(),
-    #     api_key: str = Depends(check_api_key, use_cache=True),
-    # ):
-    #     try:
-    #         contents = await file_input.file.read()
-    #         result = carTire(contents)
-    #         return {"result": result}
-    #     except ValueError as e:
-    #         raise HTTPException(status_code=400, detail=str(e))
-    #     except Exception as e:
-    #         raise HTTPException(status_code=500, detail=str(e))
-
-    # **************************       Car Body Pannel Gap API ENDPOINT         **************************
-
-    # class CarPanelInput(FileUploadInput):
-    #     file: UploadFile
-
-    # @app.post("/panelgap")
-    # async def panel_gap(
-    #     panel_input: CarPanelInput = Depends(), api_key: str = Depends(check_api_key)
-    # ):
-    #     try:
-    #         contents = await panel_input.file.read()
-    #         # Process car panel gap analysis using panel_input.car_id
-    #         # Replace the following line with your actual implementation
-    #         # result = process_car_panel_gap(contents, panel_input.car_id)
-    #         return StreamingResponse(
-    #             BytesIO(contents), media_type=panel_input.file.content_type
-    #         )
-    #     except Exception as e:
-    #         raise HTTPException(status_code=500, detail=str(e))
 
 except Exception as e:
     print(e)
