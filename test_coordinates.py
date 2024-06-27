@@ -55,7 +55,8 @@ city_coordinates = {
     "Winchester": ["51.0632", "-1.308"],
     "Wolverhampton": ["52.5833", "-2.1333"],
     "Worcester": ["52.1911", "-2.2206"],
-    "York": ["53.96", "-1.08"]
+    "York": ["53.96", "-1.08"],
+    "test":["54.786337610503296", "-1.7873395523171414"]
 }
 
 def check_coordinates_within_uk(city_coords):
